@@ -1,0 +1,66 @@
+export const homepageConfig = {
+  announcement: { label: 'Complimentary delivery on qualifying beauty orders', href: '/products?collection=beauty-offers' },
+  aiDiagnostics: {
+    enabled: true,
+    eyebrow: 'Next-Gen Diagnostics',
+    title: 'Meet Your Personal AI Beauty Analyser',
+    description: 'Explore intelligent beauty guidance designed to help you understand your skin, review product ingredients, and discover personalised beauty routines.',
+    prompts: [
+      'I have oily skin. What type of routine should I consider?',
+      'Help me find products for uneven-looking skin tone.',
+      'Help me understand the ingredients in my current night cream.',
+    ],
+    buttonLabel: 'Launch AI Advisor',
+    imageUrl: '/images/beauty/ai-beauty-diagnostics.png',
+    imageAlt: 'SL Beauty artificial intelligence beauty consultation preview',
+    dialog: {
+      title: 'AI Beauty Diagnostics — Coming Soon',
+      message: 'Our next-generation beauty diagnostics experience is currently being prepared. Soon, you will be able to explore guided skin insights, ingredient support, and personalised beauty routines.',
+      supportingText: 'You can continue using the existing SL Beauty AI Advisor for product and routine guidance.',
+      closeLabel: 'Got It',
+    },
+  },
+  concerns: [
+    ['Acne & Blemishes', 'skincare&q=acne', 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80'],
+    ['Dryness', 'skincare&q=hydration', 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=600&q=80'],
+    ['Dullness', 'skincare&q=brightening', 'https://images.unsplash.com/photo-1620916297397-a4a5402a3c6c?auto=format&fit=crop&w=600&q=80'],
+    ['Sun Protection', 'skincare&q=sunscreen', 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=600&q=80'],
+  ],
+  ingredients: [
+    ['Vitamin C', 'vitamin+c', 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?auto=format&fit=crop&w=500&q=80'],
+    ['Hyaluronic Acid', 'hyaluronic+acid', 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=500&q=80'],
+    ['Niacinamide', 'niacinamide', 'https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=500&q=80'],
+    ['Retinol', 'retinol', 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=500&q=80'],
+  ],
+  routines: [
+    ['Morning Skincare', 'Cleanse, hydrate and protect for a confident start.', '/products?collection=morning-routine', 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=800&q=80'],
+    ['Night Skincare', 'Restore your glow with an evening ritual.', '/products?collection=night-routine', 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80'],
+    ['Hair Repair', 'Nourishing essentials for smoother, stronger hair.', '/products?category=hair-care', 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=800&q=80'],
+  ],
+  stories: [
+    ['Skincare Guide', 'Build a simple routine that works for your skin', '/buyer-guide', 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=700&q=80'],
+    ['Beauty Notes', 'How to choose a fragrance for every occasion', '/products?category=fragrance', 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=700&q=80'],
+    ['Haircare Edit', 'Care essentials for your healthiest-looking hair', '/products?category=hair-care', 'https://images.unsplash.com/photo-1523268755815-fe7c372a0349?auto=format&fit=crop&w=700&q=80'],
+  ],
+  trendingCategories: [
+    ['K-Beauty', '/products?category=skincare&q=k-beauty', 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=480&q=80'],
+    ['Gen Z Beauty', '/products?category=makeup', 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=480&q=80'],
+    ['Festive Favourites', '/products?collection=gift-sets', 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=480&q=80'],
+    ['Wedding Beauty', '/products?category=makeup&q=bridal', 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?auto=format&fit=crop&w=480&q=80'],
+    ['Homegrown Beauty', '/brands', 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=480&q=80'],
+    ['Skincare 101', '/buyer-guide', 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=480&q=80'],
+    ['Clean Beauty', '/products?category=wellness', 'https://images.unsplash.com/photo-1608571423539-e951a7df3a2e?auto=format&fit=crop&w=480&q=80'],
+  ],
+  beautyTubeVideos: [
+    { id: 'morning-glow-essentials', title: 'Morning glow essentials', youtubeId: 'mCBM7Uc8SAk', videoUrl: 'https://www.youtube.com/shorts/mCBM7Uc8SAk', posterUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=420&q=80', duration: '00:35', sourceLabel: 'YouTube', enabled: true },
+    { id: 'soft-everyday-look', title: 'A soft everyday look', youtubeId: 'YEepPjpgX_4', videoUrl: 'https://www.youtube.com/shorts/YEepPjpgX_4', posterUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=420&q=80', duration: '00:42', sourceLabel: 'YouTube', enabled: true },
+    { id: 'nourish-hair-ritual', title: 'Nourish your hair ritual', youtubeId: 'nHcYmlq_lb4', videoUrl: 'https://www.youtube.com/shorts/nHcYmlq_lb4', posterUrl: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=420&q=80', duration: '00:30', sourceLabel: 'YouTube', enabled: true },
+    { id: 'signature-scent', title: 'Find your signature scent', youtubeId: 'GVpdgfufWJo', videoUrl: 'https://www.youtube.com/shorts/GVpdgfufWJo', posterUrl: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=420&q=80', duration: '00:28', sourceLabel: 'YouTube', enabled: true },
+    { id: 'hydration-edit', title: 'The hydration edit', youtubeId: 'chnjy35JhLM', videoUrl: 'https://www.youtube.com/shorts/chnjy35JhLM', posterUrl: 'https://images.unsplash.com/photo-1620916297397-a4a5402a3c6c?auto=format&fit=crop&w=420&q=80', duration: '00:40', sourceLabel: 'YouTube', enabled: true },
+    { id: 'beauty-routine-basics', title: 'Beauty routine basics', youtubeId: 'iU0dJmLo6wA', videoUrl: 'https://www.youtube.com/shorts/iU0dJmLo6wA', posterUrl: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=420&q=80', duration: '00:34', sourceLabel: 'YouTube', enabled: true },
+  ],
+  promotionalBanners: {
+    offer: { eyebrow: 'A little beauty treat', title: 'Discover fresh savings on beauty favourites', buttonLabel: 'Shop Offers', buttonUrl: '/products?collection=beauty-offers', imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=85', alt: 'SL Beauty offer featuring skincare and makeup' },
+    advisor: { eyebrow: 'Need help choosing?', title: 'Talk to our Beauty Advisor', description: 'Get personalised skincare, makeup, fragrance, and product recommendations.', primaryLabel: 'Chat Now', primaryUrl: '/contact-support', secondaryLabel: 'Find My Routine', secondaryUrl: '/buyer-guide', imageUrl: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=1200&q=85', alt: 'Soft blush beauty advisor campaign' },
+  },
+};

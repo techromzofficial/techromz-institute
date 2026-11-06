@@ -1,0 +1,1 @@
+import Link from "next/link";export default function NotFound(){return <div className="card state"><h1>Admin record not found</h1><p className="muted">The record ID is invalid or no longer available.</p><p><Link className="button primary" href="/admin/dashboard">Return to dashboard</Link></p></div>}

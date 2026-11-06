@@ -1,0 +1,4 @@
+export interface SupplierQueueMetric{label:string;value:string;tone?:"warning"|"danger"}
+export const supplierQueueMetrics:SupplierQueueMetric[]=[{label:"New Apps",value:"42"},{label:"Under Review",value:"128"},{label:"Info Required",value:"15"},{label:"Approved (Mo)",value:"312"},{label:"Rejected",value:"8"},{label:"Expiring Docs",value:"24",tone:"warning"},{label:"Suspended",value:"4"},{label:"High Risk",value:"12",tone:"danger"}];
+export const systemEfficiency={label:"Average verification time",value:"4.2 Days",comparison:"-0.8d vs last year",progress:72};
+export const expiringDocuments=[{supplier:"LuxeSkin Wholesale",document:"Trade License",days:3},{supplier:"Tokyo Beauty Co.",document:"Insurance Certificate",days:12},{supplier:"Serene Botanics Lanka",document:"Business Registration",days:18},{supplier:"Velvet Botanics Ltd.",document:"MSDS Update",days:5}];

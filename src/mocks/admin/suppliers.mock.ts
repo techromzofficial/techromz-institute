@@ -1,0 +1,1 @@
+export {suppliers} from "./fixtures";

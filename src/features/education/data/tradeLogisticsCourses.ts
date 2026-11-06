@@ -1,0 +1,220 @@
+import type { EducationCourse, EducationLevel, EducationWeeklyCourseSession } from '../contracts/course';
+
+type Week = [string, string[], string, string, string];
+type Draft = {
+  slug: string; title: string; subtitle: string; level: EducationLevel; fee: string; summary: string;
+  audiences: string[]; requirements: string[]; outcomes: string[]; projectTitle: string;
+  projectIntroduction: string; projectFeatures: string[];
+  preview: { appName: string; heading: string; placeholder: string; result: string };
+  weeks: Week[];
+};
+
+const pathway = [
+  { slug: 'international-trade-kickstart', title: 'International Trade Kickstart', level: 'Beginner' as const },
+  { slug: 'logistics-warehouse-operations-kickstart', title: 'Logistics & Warehouse Operations Kickstart', level: 'Beginner' as const },
+  { slug: 'import-export-operations-lab', title: 'Import & Export Operations Lab', level: 'Intermediate' as const },
+  { slug: 'procurement-inventory-distribution-lab', title: 'Procurement, Inventory & Distribution Lab', level: 'Intermediate' as const },
+  { slug: 'international-trade-supply-chain-strategy', title: 'International Trade & Supply Chain Strategy', level: 'Advanced' as const },
+  { slug: 'logistics-leadership-optimization', title: 'Logistics Leadership & Optimization', level: 'Advanced' as const },
+];
+
+const weekly = (items: Week[]): EducationWeeklyCourseSession[] => items.map(([title, objectives, activity, deliverable, outcome]) => ({ title, objectives, activity, deliverable, outcome }));
+
+const imageAlts: Record<string, string> = {
+  'international-trade-kickstart': 'International trade planning workspace with a globe, cargo ship, aircraft, containers and route map',
+  'logistics-warehouse-operations-kickstart': 'Warehouse operations scene with storage racks, forklift, delivery truck, barcode scanner and receiving checklist',
+  'import-export-operations-lab': 'Import and export documentation workspace with cargo containers, freight vehicles, route map and shipment checklist',
+  'procurement-inventory-distribution-lab': 'Procurement and distribution workspace with inventory dashboards, warehouse stock, delivery truck and route plan',
+  'international-trade-supply-chain-strategy': 'Global supply-chain strategy workspace with connected world maps, cargo ship, aircraft, containers and planning charts',
+  'logistics-leadership-optimization': 'Logistics leader reviewing warehouse operations and performance dashboards across an active distribution centre',
+};
+
+function makeCourse(d: Draft): EducationCourse {
+  const experience = d.level === 'Beginner' ? 'No previous trade or logistics experience is required.' : d.level === 'Intermediate' ? 'Foundational trade, logistics or relevant operational experience is recommended.' : 'Prior trade, logistics, supply-chain or management learning or substantial relevant experience is expected.';
+  return {
+    slug: d.slug, title: d.title, subtitle: d.subtitle, subject: 'Trade & Logistics', level: d.level,
+    summary: d.summary, description: d.summary, learningOutcomes: d.outcomes,
+    outline: d.weeks.map(([title, objectives]) => ({ title, topics: objectives })),
+    detailsToConfirm: ['Registration date and class start date', 'Instructor details', 'Final certification and assessment policy approval'],
+    accent: d.level === 'Advanced' ? 'indigo' : d.level === 'Intermediate' ? 'cyan' : 'blue', demo: false, seoIndexable: false,
+    image: `/images/institute/learning/generated/trade-logistics/${d.slug}.webp`,
+    keywords: ['trade', 'logistics', 'supply chain', 'warehouse', 'import export', d.title],
+    plannedDetails: {
+      provider: 'Techromz Institute', duration: 'Eight weeks', cohortCapacity: 'Maximum 30 students per course/session',
+      prerequisites: experience, schedule: 'One 2-hour live class each week', totalLiveLearning: '16 hours',
+      independentPractice: 'Practical assignments throughout the course', finalProject: d.projectTitle,
+      certificate: 'Proposed Techromz Institute Certificate of Completion', fee: d.fee,
+      teachingLanguage: 'Sinhala with commonly used English trade terminology', deliveryMode: 'Online (Zoom)',
+      startTime: '00:00', endTime: '00:00', timeZone: 'Asia/Colombo', admissionFact: `${d.level} planned admission`,
+      heroCopy: `${d.summary} Learn through fictional products, companies, suppliers and shipments without using private operational data.`,
+      imageBaseName: `trade-logistics/${d.slug}`, imageAlt: imageAlts[d.slug],
+      audienceHeadline: `Practical ${d.level.toLowerCase()} trade and logistics learning built around supervised simulations.`,
+      audiences: d.audiences, requirements: d.requirements,
+      requirementNote: `${experience} Final entry decisions remain subject to the published admissions policy; an enquiry is not acceptance.`,
+      learningHeadline: 'Build evidence through documents, calculations, workflows and decisions.',
+      learningNote: 'All documents and operations are fictional teaching examples. The course does not grant customs-agent authority, professional licensing or access to live trade systems.',
+      curriculumHeadline: 'Eight guided weeks from core concepts to a practical simulation.',
+      curriculumIntroduction: 'One planned 2-hour live Zoom class is held each week, supported by practical assignments.',
+      curriculumNote: 'Jurisdiction-specific procedures and regulated topics require review against current official sources before delivery.',
+      curriculum: [], weeklyCurriculum: weekly(d.weeks), projectTitle: d.projectTitle,
+      projectIntroduction: `${d.projectIntroduction} The project uses fictional teaching materials and is not a legally valid transaction or professional advisory engagement.`,
+      projectTopics: [], projectFeatures: d.projectFeatures,
+      projectPreview: { ...d.preview, note: 'Illustrative simulated learning record', disclaimer: 'Illustrative static preview only—no live freight, customs, shipping, warehouse or inventory system is connected.' },
+      included: ['Eight planned live Zoom classes', 'Guided fictional case studies and document templates', 'Weekly practical assignments and project checkpoints', 'Final practical assessment guidance', 'Recorded sessions for enrolled students, subject to the Institute access policy'],
+      includedNote: 'Access duration, recording availability and final materials remain subject to Institute policy. No real transaction supervision, regulatory approval, employment or external accreditation is promised.',
+      assessment: [
+        { label: 'Practical assignments throughout the course', weight: 'Required · final criteria pending' },
+        { label: 'Final practical project and presentation', weight: 'Required · final criteria pending' },
+      ],
+      completionRequirements: ['Proposed: attend at least five of eight live classes', 'Proposed: submit the required practical assignments', 'Proposed: achieve at least 60% in the final practical assessment'],
+      completionPolicyNote: 'The established Institute model includes one free resubmission within 14 days. Its application to this department remains proposed for academic and policy approval.',
+      assessmentNote: 'Attendance, the 60% threshold, resubmission and certificate conditions are proposed for review before enrolment. No customs licence, professional accreditation or regulatory eligibility is claimed.',
+      recognitionStatement: 'Planned learning support is provided by Techromz Institute. Certificate eligibility and wording remain subject to confirmation that the Institute completion policy applies to this department.',
+      admissions: {
+        heading: `${d.level} entry for a planned practical intake`,
+        summary: `${experience} Applicants should be able to join the weekly online class and complete independent practical work. Final selection and intake arrangements will be published before enrolment.`,
+        applicationItems: [], reviewCriteria: [],
+        alternativeRoute: 'No registration or payment is currently enabled. Expressing interest does not confirm eligibility, enrolment or access to a live shipment.',
+        reviewNote: 'Dates and intake arrangements are not yet confirmed.',
+        capacityNotice: 'Maximum 30 students per course/session. This is the planned maximum capacity—not a live count of remaining seats.',
+      },
+      pathwayCourses: pathway,
+      scopeExclusions: ['Submitting customs declarations or acting as a licensed customs agent', 'Use of private company or customer information', 'Access to live freight, customs, shipping or inventory infrastructure', 'Legal, customs, tax or regulated professional advice'],
+      interestNotice: 'Registering interest starts an enquiry only. It does not reserve a seat or confirm enrolment. Registration and class dates remain to be announced.',
+      faqs: [
+        { question: 'Who can join this course?', answer: `${d.level} applicants interested in practical trade and logistics may enquire. ${experience} Final eligibility is subject to the published admissions policy.` },
+        { question: 'Do I need previous trade or logistics experience?', answer: experience },
+        { question: 'What equipment do I need?', answer: 'A laptop or desktop computer, reliable internet, Zoom access and basic document and spreadsheet tools are expected. Final software requirements will be confirmed before enrolment.' },
+        { question: 'How much time should I set aside each week?', answer: 'The proposed format includes one 2-hour live class each week plus time for the practical assignment. Exact independent-practice guidance will be confirmed before enrolment.' },
+        { question: 'What practical assignments will I complete?', answer: `Weekly deliverables build toward ${d.projectTitle}, using fictional documents, calculations, records and operational decisions.` },
+        { question: 'Do the exercises involve real shipments or simulated operations?', answer: 'They use simulated operations and fictional teaching documents. The course does not promise access to or supervision of real import, export, freight, customs or warehouse transactions.' },
+        { question: 'What must I complete to receive the certificate?', answer: 'The proposed model requires at least five of eight classes, required assignments and at least 60% in the final practical assessment. These certificate and resubmission rules must be confirmed for the Trade & Logistics Department before enrolment.' },
+        { question: 'When do registration and classes begin?', answer: 'Registration and start dates have not been verified or configured. Registering interest lets Techromz Institute contact you when approved information is available.' },
+        { question: 'Does registering interest reserve a seat?', answer: 'No. It starts an enquiry only and does not reserve a seat, confirm enrolment or create a payment obligation.' },
+      ],
+    },
+  };
+}
+
+export const TRADE_LOGISTICS_COURSES: EducationCourse[] = [
+  makeCourse({
+    slug: 'international-trade-kickstart', title: 'International Trade Kickstart', subtitle: 'Understand how goods, documents and costs move between countries', level: 'Beginner', fee: 'LKR 10,000',
+    summary: 'A planned beginner course introducing international trade participants, products, sourcing, documents, shipping choices, costs and shipment planning.',
+    audiences: ['School leavers and beginners curious about international trade.', 'Small-business learners exploring importing or exporting concepts.', 'Learners ready to complete a fictional first-trade portfolio.'],
+    requirements: ['No prior trade experience required', 'Basic computer and spreadsheet skills', 'Access to a laptop or desktop and reliable internet'],
+    outcomes: ['Explain the purpose and basic flow of international trade', 'Distinguish the roles of importers, exporters, suppliers, freight providers and authorities', 'Compare a fictional product, market and supplier using stated criteria', 'Prepare sample trade documents and identify their purpose', 'Compare shipping choices and introductory Incoterms concepts without treating them as legal advice', 'Calculate a basic illustrative landed-cost estimate and shipment plan'],
+    projectTitle: 'My First International Trade Plan', projectIntroduction: 'Prepare a beginner portfolio for a fictional product and simulated shipment.',
+    projectFeatures: ['Fictional product and market selection', 'Supplier comparison', 'Sample commercial invoice', 'Sample packing list', 'Basic landed-cost estimate', 'Shipment workflow', 'Risk notes and assumptions'],
+    preview: { appName: 'Shipment planning board', heading: 'Sample first-trade workflow', placeholder: 'Product · supplier · documents · transport · cost', result: 'Illustrative flow: compare two fictional suppliers, prepare teaching documents, estimate basic costs and map shipment milestones.' },
+    weeks: [
+      ['Introduction to International Trade', ['Why countries and businesses trade', 'Imports, exports and a simple shipment flow'], 'Map how a fictional Sri Lankan business buys or sells a product internationally.', 'Trade-flow map and key-term glossary.', 'Explain the basic international trade flow and its purpose.'],
+      ['Trade Participants and Responsibilities', ['Importers, exporters and suppliers', 'Freight, carriers, banks and authorities'], 'Assign responsibilities in a simulated shipment.', 'Participant and responsibility map.', 'Distinguish the main participants without implying professional authority.'],
+      ['Products, Markets and Sourcing', ['Product suitability', 'Market questions', 'Supplier comparison criteria'], 'Compare fictional products and suppliers.', 'Product selection and supplier comparison.', 'Select an option using transparent criteria and assumptions.'],
+      ['Introduction to Trade Documents', ['Document purposes', 'Commercial invoices and packing lists', 'Accuracy and consistency'], 'Complete teaching versions of an invoice and packing list.', 'Sample commercial invoice and packing list.', 'Prepare internally consistent fictional trade documents.'],
+      ['Shipping Methods and Incoterms Awareness', ['Air, sea and courier comparisons', 'Introductory responsibility and cost concepts', 'Incoterms scope and limits'], 'Compare transport options for a fictional shipment.', 'Shipping option comparison.', 'Explain a basic shipping choice and identify where specialist advice is needed.'],
+      ['Basic Freight and Landed-Cost Calculations', ['Freight cost components', 'Currency and assumptions', 'Introductory landed cost'], 'Calculate an illustrative shipment estimate.', 'Basic landed-cost worksheet.', 'Produce a traceable estimate without inventing duties or tariffs.'],
+      ['Shipment Planning and Risk Awareness', ['Milestones and handovers', 'Document and delay risks', 'Contingency questions'], 'Build a simulated shipment plan and risk checklist.', 'Shipment workflow and risk notes.', 'Sequence shipment activities and identify basic risks.'],
+      ['Final Simulated Trade Project', ['Portfolio integration', 'Assumptions and limitations', 'Presentation'], 'Review and present the fictional trade plan.', 'My First International Trade Plan.', 'Present a coherent plan and answer questions about evidence and limitations.'],
+    ],
+  }),
+  makeCourse({
+    slug: 'logistics-warehouse-operations-kickstart', title: 'Logistics & Warehouse Operations Kickstart', subtitle: 'Build practical foundations in receiving, storage, inventory and dispatch', level: 'Beginner', fee: 'LKR 10,000',
+    summary: 'A planned beginner course covering warehouse flow, material movement, receiving, storage, stock records, picking, dispatch, safety and basic performance.',
+    audiences: ['Beginners and school leavers interested in warehouse and distribution work.', 'Small-business staff supporting stock and dispatch activities.', 'Learners seeking a structured operational foundation.'],
+    requirements: ['No warehouse experience required', 'Basic numeracy and computer skills', 'Access to a laptop or desktop and spreadsheet tools'],
+    outcomes: ['Explain the role of warehousing within logistics', 'Map material movement through a simple warehouse', 'Perform a simulated receiving and checking process', 'Organise fictional stock using location and identification rules', 'Maintain a basic stock register and calculate inventory accuracy', 'Plan picking, packing and dispatch with safety and service checks'],
+    projectTitle: 'Mini Warehouse Operations Plan', projectIntroduction: 'Design and document a fictional small-warehouse operation from receipt to dispatch.',
+    projectFeatures: ['Warehouse layout', 'Receiving checklist', 'Stock register', 'Storage and location rules', 'Picking record', 'Packing and dispatch checklist', 'Inventory accuracy calculation', 'Safety and performance notes'],
+    preview: { appName: 'Warehouse register', heading: 'Illustrative receiving and stock view', placeholder: 'Item · quantity · location · status · variance', result: 'Example: record a fictional delivery, flag a quantity difference, assign a storage location and update the teaching stock register.' },
+    weeks: [
+      ['Introduction to Logistics and Warehousing', ['Logistics flow', 'Warehouse purpose and customer service'], 'Trace a product from supplier to customer.', 'Logistics and warehouse flow map.', 'Explain how warehousing supports availability and service.'],
+      ['Warehouse Structure and Material Movement', ['Zones and layout', 'Movement paths', 'Basic equipment awareness'], 'Sketch a safe fictional warehouse layout.', 'Warehouse layout and movement plan.', 'Arrange zones to support a clear material flow.'],
+      ['Receiving Goods and Checking Records', ['Receiving steps', 'Quantity and condition checks', 'Discrepancy records'], 'Run a simulated receiving check.', 'Receiving checklist and discrepancy note.', 'Record receipt information accurately and escalate a difference.'],
+      ['Storage and Stock Organisation', ['Locations and labels', 'Product characteristics', 'Housekeeping'], 'Assign sample items to locations.', 'Storage and location plan.', 'Apply consistent storage and identification rules.'],
+      ['Inventory Records and Stock Counting', ['Stock registers', 'Cycle and full counts', 'Inventory accuracy'], 'Count fictional stock and reconcile records.', 'Stock register and accuracy calculation.', 'Calculate and explain a basic stock variance.'],
+      ['Picking, Packing and Dispatch', ['Order picking', 'Packing checks', 'Dispatch records'], 'Process a simulated customer order.', 'Picking and dispatch record.', 'Complete an accurate order-to-dispatch sequence.'],
+      ['Performance and Workplace Safety', ['Basic warehouse KPIs', 'Hazard awareness', 'Quality and service'], 'Review a fictional incident and performance report.', 'Safety checklist and KPI note.', 'Identify operational risks and simple performance measures.'],
+      ['Warehouse Operations Simulation', ['Integrated workflow', 'Controls and records', 'Presentation'], 'Run a receipt-to-dispatch tabletop simulation.', 'Mini Warehouse Operations Plan.', 'Present a workable warehouse plan and justify controls.'],
+    ],
+  }),
+  makeCourse({
+    slug: 'import-export-operations-lab', title: 'Import & Export Operations Lab', subtitle: 'Coordinate a simulated shipment from quotation to document review', level: 'Intermediate', fee: 'LKR 20,000',
+    summary: 'A planned intermediate lab for coordinating an end-to-end simulated import or export operation, documents, freight choices, costs, milestones and exceptions.',
+    audiences: ['Learners with trade foundations or relevant operational experience.', 'Staff who support purchasing, shipping documentation or coordination.', 'Small-business operators seeking a structured simulation.'],
+    requirements: ['Foundational trade knowledge or relevant experience', 'Comfort using spreadsheets and documents', 'No submission of real customs or client records'],
+    outcomes: ['Map an international shipment lifecycle and responsibility handovers', 'Evaluate quotations and prepare a fictional purchase order', 'Review commercial invoices and packing lists for consistency', 'Compare freight choices and build a shipment milestone plan', 'Prepare an educational documentation checklist for customs coordination', 'Calculate and explain an illustrative landed-cost analysis'],
+    projectTitle: 'End-to-End Import/Export Documentation Portfolio', projectIntroduction: 'Coordinate a fictional shipment case and assemble a complete educational operations portfolio.',
+    projectFeatures: ['Purchase order', 'Commercial invoice', 'Packing list', 'Freight comparison', 'Shipment milestones', 'Educational document checklist', 'Landed-cost analysis', 'Exception and review notes'],
+    preview: { appName: 'Documentation portfolio', heading: 'Simulated shipment file', placeholder: 'PO · invoice · packing list · freight · milestones', result: 'Example: cross-check fictional quantities and terms across teaching documents, compare freight options and record unresolved exceptions.' },
+    weeks: [
+      ['International Shipment Lifecycle', ['End-to-end stages', 'Parties and handovers', 'Control points'], 'Map a simulated shipment lifecycle.', 'Lifecycle and responsibility map.', 'Coordinate stages and identify control points.'],
+      ['Quotations and Purchase Orders', ['Quotation fields', 'Comparison criteria', 'Purchase-order controls'], 'Compare supplier quotations and draft a PO.', 'Quotation analysis and purchase order.', 'Translate an approved fictional quotation into a controlled order.'],
+      ['Commercial Invoices and Packing Lists', ['Document structure', 'Cross-document consistency', 'Error detection'], 'Review and correct fictional documents.', 'Invoice, packing list and review log.', 'Detect and document inconsistencies.'],
+      ['Freight Selection and Shipment Planning', ['Mode and service choice', 'Lead time and cost', 'Milestones'], 'Prepare a freight comparison and schedule.', 'Freight comparison and milestone plan.', 'Recommend a shipment option using explicit criteria.'],
+      ['Documentation and Customs Coordination', ['Educational document checklist', 'Information handover', 'Licensed-role boundaries'], 'Build a document readiness checklist.', 'Sample document checklist.', 'Support coordination without claiming customs-agent authority.'],
+      ['Landed Cost and Shipment Costing', ['Cost components', 'Allocation and assumptions', 'Sensitivity'], 'Build an illustrative landed-cost model.', 'Cost analysis and assumptions.', 'Explain a transparent cost estimate without inventing tariffs.'],
+      ['Tracking, Exceptions and Document Review', ['Status tracking', 'Exception escalation', 'Final document checks'], 'Respond to a fictional delay and discrepancy.', 'Tracking log and exception response.', 'Recommend proportionate action using shipment evidence.'],
+      ['Complete Import/Export Case Study', ['Portfolio integration', 'Audit trail', 'Presentation'], 'Complete and present the simulated case.', 'End-to-End Import/Export Documentation Portfolio.', 'Defend operational choices and identify professional-review points.'],
+    ],
+  }),
+  makeCourse({
+    slug: 'procurement-inventory-distribution-lab', title: 'Procurement, Inventory & Distribution Lab', subtitle: 'Connect supplier selection, purchasing, replenishment and delivery coordination', level: 'Intermediate', fee: 'LKR 20,000',
+    summary: 'A planned intermediate lab integrating procurement workflow, supplier evaluation, purchase orders, replenishment, stock controls, distribution and performance.',
+    audiences: ['Learners with business, warehouse or procurement foundations.', 'Staff supporting purchasing, inventory or distribution coordination.', 'Operators who need evidence-based supplier and replenishment decisions.'],
+    requirements: ['Foundational operations knowledge or relevant experience', 'Basic spreadsheet competence', 'Ability to work with fictional operational data'],
+    outcomes: ['Map purchasing responsibilities and approval controls', 'Score suppliers and compare quotations using documented criteria', 'Prepare a controlled fictional purchase order and supplier message', 'Calculate a basic replenishment recommendation from demand assumptions', 'Design inventory controls and distribution coordination steps', 'Evaluate procurement cost and performance indicators'],
+    projectTitle: 'Integrated Procurement & Inventory Operations Portfolio', projectIntroduction: 'Build an integrated portfolio for a fictional purchasing, stock and distribution scenario.',
+    projectFeatures: ['Supplier scoring', 'Quotation comparison', 'Purchase order', 'Supplier communication', 'Inventory records', 'Reorder calculation', 'Distribution plan', 'KPI and cost summary'],
+    preview: { appName: 'Supplier and reorder worksheet', heading: 'Illustrative procurement view', placeholder: 'Supplier · score · lead time · cost · reorder', result: 'Example: compare fictional suppliers, calculate a reorder trigger from stated assumptions and plan distribution responsibilities.' },
+    weeks: [
+      ['Procurement Workflow and Responsibilities', ['Need identification', 'Approvals and separation of duties', 'Purchasing records'], 'Map a controlled procurement workflow.', 'Procurement process and responsibility map.', 'Explain responsibilities and basic control points.'],
+      ['Supplier Evaluation and Quotations', ['Selection criteria', 'Supplier scoring', 'Quotation comparison'], 'Score fictional suppliers.', 'Supplier scorecard and quotation comparison.', 'Recommend a supplier using balanced criteria.'],
+      ['Purchase Orders and Communication', ['PO fields', 'Authorisation', 'Clear supplier communication'], 'Prepare a fictional PO and clarification email.', 'Purchase order and communication record.', 'Create accurate purchasing instructions and an audit trail.'],
+      ['Demand and Replenishment Basics', ['Demand patterns', 'Lead-time awareness', 'Reorder calculations'], 'Calculate a guided reorder recommendation.', 'Demand view and reorder worksheet.', 'Use stated assumptions to plan replenishment.'],
+      ['Inventory Management and Controls', ['Stock records', 'Accuracy and losses', 'Control design'], 'Review a fictional stock variance.', 'Inventory record and control proposal.', 'Recommend controls matched to a defined risk.'],
+      ['Warehouse and Distribution Coordination', ['Inbound scheduling', 'Order fulfilment', 'Delivery coordination'], 'Plan an inbound-to-distribution sequence.', 'Distribution coordination plan.', 'Coordinate warehouse and delivery dependencies.'],
+      ['Procurement KPIs and Cost Analysis', ['Supplier performance', 'Inventory measures', 'Total-cost awareness'], 'Build a small KPI and cost summary.', 'Procurement dashboard and analysis.', 'Interpret performance without relying on one measure.'],
+      ['Integrated Operations Simulation', ['End-to-end integration', 'Exception handling', 'Presentation'], 'Run a procurement-to-delivery case.', 'Integrated Procurement & Inventory Operations Portfolio.', 'Present an integrated operational recommendation.'],
+    ],
+  }),
+  makeCourse({
+    slug: 'international-trade-supply-chain-strategy', title: 'International Trade & Supply Chain Strategy', subtitle: 'Design resilient sourcing, logistics and performance choices', level: 'Advanced', fee: 'LKR 30,000',
+    summary: 'A planned advanced course in international supply-chain strategy, global sourcing, logistics networks, trade risk, resilience, optimisation and executive performance.',
+    audiences: ['Managers and experienced professionals responsible for trade or supply-chain choices.', 'Learners with prior trade, logistics or operations study.', 'Decision-makers ready to evaluate complex cost, risk and service trade-offs.'],
+    requirements: ['Prior trade, logistics or management knowledge', 'Confidence with case analysis and spreadsheets', 'Independent strategic reading and project work'],
+    outcomes: ['Frame supply-chain strategy around business and customer priorities', 'Evaluate markets, sourcing regions and supplier-network trade-offs', 'Design a transportation and logistics-network proposal', 'Create trade-risk and compliance governance without replacing professional advice', 'Stress-test resilience using disruption scenarios', 'Present an optimisation roadmap and strategic KPI framework'],
+    projectTitle: 'International Trade & Supply Chain Strategy Proposal', projectIntroduction: 'Develop an executive strategy proposal for a fictional international supply network.',
+    projectFeatures: ['Market and sourcing assessment', 'Supplier-network analysis', 'Scenario-based cost analysis', 'Risk register', 'Network proposal', 'Resilience options', 'Strategic KPI framework', 'Improvement roadmap'],
+    preview: { appName: 'Supply-chain strategy dashboard', heading: 'Illustrative network and risk view', placeholder: 'Market · supplier · route · cost · risk · KPI', result: 'Example: compare two fictional sourcing networks across cost, lead time, concentration risk and recovery options before proposing a phased roadmap.' },
+    weeks: [
+      ['International Supply-Chain Strategy', ['Strategic alignment', 'Customer and service priorities', 'Decision scope'], 'Frame a fictional strategic supply-chain challenge.', 'Strategic issue brief.', 'Define priorities and decision boundaries.'],
+      ['Global Sourcing and Market Selection', ['Market criteria', 'Sourcing options', 'Country and supplier assumptions'], 'Compare sourcing-market scenarios.', 'Market and sourcing assessment.', 'Recommend an option with explicit uncertainty.'],
+      ['Supplier Network Analysis', ['Network structure', 'Supplier capability', 'Concentration and dependency'], 'Analyse a fictional supplier network.', 'Supplier-network assessment.', 'Identify strategic dependencies and options.'],
+      ['Transportation and Logistics Strategy', ['Mode and route strategy', 'Service and cost trade-offs', 'Network design'], 'Design alternative logistics networks.', 'Transportation and network proposal.', 'Align logistics choices with strategic priorities.'],
+      ['Trade Risk and Compliance Governance', ['Risk ownership', 'Control assurance', 'Professional-review boundaries'], 'Build a governance and risk register.', 'Trade risk and governance plan.', 'Assign accountable controls without claiming regulatory authority.'],
+      ['Resilience and Disruption Scenarios', ['Scenario planning', 'Buffers and alternatives', 'Response and recovery'], 'Run a fictional disruption tabletop exercise.', 'Resilience options and scenario analysis.', 'Evaluate recovery choices across cost and service.'],
+      ['Cost Optimisation and Performance', ['Total-cost thinking', 'Strategic KPIs', 'Optimisation constraints'], 'Build a scenario cost and KPI framework.', 'Cost analysis and strategic dashboard.', 'Recommend optimisation without weakening key controls.'],
+      ['Executive Strategy Presentation', ['Synthesis', 'Roadmap and governance', 'Executive challenge'], 'Present to a simulated leadership panel.', 'International Trade & Supply Chain Strategy Proposal.', 'Defend a phased strategy, risks and performance measures.'],
+    ],
+  }),
+  makeCourse({
+    slug: 'logistics-leadership-optimization', title: 'Logistics Leadership & Optimization', subtitle: 'Lead teams, measure operations and deliver controlled improvement', level: 'Advanced', fee: 'LKR 30,000',
+    summary: 'A planned advanced course for leading logistics teams, planning capacity, optimising inventory and distribution, managing service risk and delivering improvement.',
+    audiences: ['Logistics supervisors, managers and experienced operations professionals.', 'Learners moving into leadership and improvement responsibilities.', 'Decision-makers who need balanced operational and people measures.'],
+    requirements: ['Relevant logistics, warehouse or operations experience', 'Ability to interpret operational data', 'Confidence presenting improvement recommendations'],
+    outcomes: ['Define logistics leadership responsibilities and operating rhythms', 'Plan workforce, workload and warehouse capacity using assumptions', 'Evaluate inventory and distribution optimisation choices', 'Design a balanced KPI dashboard for safety, quality, service, cost and people', 'Manage operational risk and service-quality escalation', 'Lead a phased improvement with ownership, adoption and review gates'],
+    projectTitle: 'Logistics Operations Improvement Plan', projectIntroduction: 'Analyse a fictional logistics operation and prepare a leadership-ready improvement plan.',
+    projectFeatures: ['Current-state workflow', 'Operational performance analysis', 'Capacity calculations', 'KPI dashboard concept', 'Risk and service-quality review', 'Improvement recommendations', 'Team and change plan', 'Implementation roadmap'],
+    preview: { appName: 'Logistics improvement dashboard', heading: 'Illustrative operational KPI view', placeholder: 'Safety · quality · service · cost · people', result: 'Example: combine workload, capacity, order accuracy and delay measures to prioritise a controlled improvement and assign accountable owners.' },
+    weeks: [
+      ['Logistics Leadership Responsibilities', ['Leadership accountabilities', 'Operating rhythm', 'Ethical and safe decisions'], 'Diagnose a fictional leadership scenario.', 'Leadership responsibility and meeting rhythm.', 'Define clear operational leadership accountabilities.'],
+      ['Warehouse Workforce and Operations Planning', ['Workload and staffing', 'Shift and task planning', 'Team communication'], 'Build an illustrative workforce plan.', 'Workforce and operations plan.', 'Align people and work using stated assumptions.'],
+      ['Capacity and Resource Allocation', ['Capacity measures', 'Constraints and bottlenecks', 'Resource trade-offs'], 'Calculate capacity for a fictional workflow.', 'Capacity analysis and allocation decision.', 'Recommend a feasible resource response.'],
+      ['Inventory and Distribution Optimisation', ['Inventory-service trade-offs', 'Distribution flow', 'Optimisation constraints'], 'Compare improvement scenarios.', 'Inventory and distribution recommendation.', 'Balance service, cost and risk in an optimisation choice.'],
+      ['KPIs and Operational Dashboards', ['Leading and lagging measures', 'Data quality', 'Review cadence'], 'Design a balanced logistics dashboard.', 'KPI dashboard concept.', 'Select measures that support action rather than vanity reporting.'],
+      ['Operational Risk and Service Quality', ['Risk controls', 'Service failures', 'Escalation and recovery'], 'Lead a simulated service incident review.', 'Risk and service-quality plan.', 'Coordinate a controlled response and learning review.'],
+      ['Continuous Improvement and Change Leadership', ['Root causes', 'Improvement methods', 'Adoption and resistance'], 'Plan a limited improvement pilot.', 'Improvement and change plan.', 'Design change with ownership, feedback and decision gates.'],
+      ['Optimization Proposal and Presentation', ['Integrated business case', 'Roadmap', 'Leadership presentation'], 'Present the improvement proposal.', 'Logistics Operations Improvement Plan.', 'Defend recommendations, assumptions and implementation controls.'],
+    ],
+  }),
+];

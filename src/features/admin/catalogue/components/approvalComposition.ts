@@ -1,0 +1,3 @@
+import type{ApprovalDecision}from"../contracts/catalogueContracts";
+export const CATALOGUE_APPROVAL_COMPOSITION={queue:["QueuePage","FilterWorkspace","EnterpriseDataTable","StatusBadge"],detail:["DetailPage","DetailTabs","DecisionPanel","ReasonModal","WorkflowTimeline"]}as const;
+export const APPROVAL_DECISION_PERMISSION:Record<ApprovalDecision,string>={approve:"catalogue.products.approve",approve_with_conditions:"catalogue.products.approve",reject:"catalogue.products.approve",request_information:"catalogue.products.approve",assign_reviewer:"catalogue.products.approve",suspend:"catalogue.products.approve"};

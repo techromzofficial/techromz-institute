@@ -1,0 +1,4 @@
+.next
+node_modules
+next-env.d.ts
+src/features/education/administration/smtpRuntime.d.mts

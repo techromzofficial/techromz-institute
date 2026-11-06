@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function PageHeader({title,description,crumbs=[],backHref,actions}:{title:string;description:string;crumbs?:string[];backHref?:string;actions?:React.ReactNode}){return <><div className="breadcrumbs" aria-label="Breadcrumb">{backHref&&<Link href={backHref}>← Back</Link>}{crumbs.map((c,i)=><span key={c}>{i>0&&" / "}{c}</span>)}</div><div className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{actions&&<div className="page-actions">{actions}</div>}</div></>}

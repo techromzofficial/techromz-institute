@@ -1,0 +1,64 @@
+{
+  "name": "techromz-institute",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "packageManager": "npm@10.9.8",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate:institute": "node scripts/migrate-institute-db.mjs",
+    "db:status:institute": "node scripts/check-institute-db-status.mjs",
+    "db:provision:institute": "node scripts/provision-institute-catalogue.mjs",
+    "db:provision:admin": "node scripts/provision-institute-admin.mjs",
+    "smtp:diagnostic": "node scripts/institute-smtp-diagnostic.mjs",
+    "enquiry:e2e": "node scripts/course-enquiry-e2e.mjs"
+  },
+  "dependencies": {
+    "js-cookie": "^3.0.5",
+    "jspdf": "^4.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.383.0",
+    "mysql2": "^3.24.6",
+    "next": "15.5.28",
+    "nodemailer": "10.3.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-hot-toast": "^2.4.1",
+    "react-leaflet": "^4.2.1",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "swiper": "12.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/jsdom": "^28.0.3",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^20",
+    "@types/react": "18.3.31",
+    "autoprefixer": "^10.5.0",
+    "brace-expansion": "^1.1.21",
+    "eslint": "^8",
+    "eslint-config-next": "15.5.28",
+    "jsdom": "^30.0.1",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.4.5",
+    "vite": "^8.3.6",
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "minimatch": "11.0.5",
+    "next": {
+      "postcss": "8.5.25"
+    }
+  }
+}

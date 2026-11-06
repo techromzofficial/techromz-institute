@@ -1,0 +1,26 @@
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import ResponsiveLearningImage from '@/features/education/components/ResponsiveLearningImage';
+import { InstituteButtonLink } from '@/features/education/components/InstituteButton';
+import { instituteMetadata } from '@/features/education/config/site';
+import { educationContentService } from '@/features/education/services/contentService';
+
+export const metadata = instituteMetadata('/institute/departments', 'Departments', 'Explore seven developing Techromz Institute departments spanning technology, business, trade, law, arts, languages, Ayurveda and wellness.');
+
+const visuals = {
+  electronics: { image: 'project-learning' as const, alt: 'Illustrative hands assembling a practical electronics project' },
+  'information-technology': { image: 'information-technology-department' as const, alt: 'Illustrative workspace representing software, data and networks' },
+  'business-management': { image: 'business-management-department' as const, alt: 'Illustrative workspace representing business planning and decision-making' },
+  'trade-logistics': { image: 'trade-logistics-department' as const, alt: 'Modern container port with a cargo vessel, freight trucks, cranes and organised container operations' },
+  'law-corporate-governance': { image: 'law/law-corporate-governance-department' as const, alt: 'Law and corporate governance workspace with legal documents, scales and professional compliance materials' },
+  'arts-languages': { image: 'department-arts-languages' as const, alt: 'Creative arts and language study with fashion sketches, jewellery, Sinhala and Asian language books' },
+  'ayurveda-wellness': { image: 'ayurveda/ayurveda-wellness-department' as const, alt: 'Illustrative Ayurveda and wellness workspace with herbal materials, brass vessels and professional study resources' },
+};
+
+export default async function DepartmentsPage() {
+  const departments = await educationContentService.listDepartments();
+  return <>
+    <section className="border-b border-blue-100 bg-gradient-to-br from-blue-50 via-white to-cyan-50"><div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-16"><div><nav aria-label="Breadcrumb"><ol className="flex gap-2 text-sm text-slate-600"><li><Link href="/institute" className="hover:text-blue-700">Home</Link></li><li aria-hidden="true">/</li><li aria-current="page" className="font-semibold text-slate-900">Departments</li></ol></nav><p className="mt-8 text-sm font-bold uppercase tracking-[.18em] text-blue-700">Areas of focus</p><h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">Explore practical learning directions.</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">TIT is developing {departments.length} connected areas. These pages explain proposed specialisms, skills and project ideas—not confirmed qualifications or enrolment-ready programmes.</p></div><figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"><div className="aspect-[3/2] overflow-hidden [&_img]:h-full [&_img]:object-cover"><ResponsiveLearningImage baseName="collaborative-learning" alt="Illustrative fictional learners collaborating around technology concepts" largeWidth={960} largeHeight={640} smallWidth={640} smallHeight={427} sizes="(min-width: 1024px) 42vw, 100vw" priority /></div></figure></div></section>
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="space-y-8">{departments.map((department, index) => { const visual = visuals[department.slug]; return <article key={department.slug} className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:grid-cols-[.85fr_1.15fr]"><div className={`aspect-[3/2] overflow-hidden md:aspect-auto ${index % 2 ? 'md:order-2' : ''} [&_img]:h-full [&_img]:object-cover`}><ResponsiveLearningImage baseName={visual.image} alt={visual.alt} largeWidth={960} largeHeight={640} smallWidth={640} smallHeight={427} sizes="(min-width: 768px) 42vw, 100vw" /></div><div className="flex flex-col justify-center p-7 sm:p-10"><p className="text-xs font-bold uppercase tracking-[.16em] text-blue-700">{department.eyebrow}</p><h2 className="mt-2 text-2xl font-bold text-slate-950">{department.name}</h2><p className="mt-3 leading-7 text-slate-600">{department.introduction}</p><p className="mt-5 text-sm font-semibold text-slate-800">{department.specialisms.slice(0, 3).map(item => item.name).join(' · ')}</p><Link href={`/institute/departments/${department.slug}`} className="mt-6 inline-flex items-center gap-2 font-bold text-blue-700">Explore department <ArrowRight size={17}/></Link></div></article>; })}</div><div className="mt-12 rounded-2xl bg-slate-950 px-7 py-8 text-white sm:flex sm:items-center sm:justify-between sm:gap-8 sm:px-10"><div><h2 className="text-2xl font-bold">Not sure where to begin?</h2><p className="mt-2 text-slate-300">Compare the planned roadmaps or ask TIT about your learning interests.</p></div><div className="mt-6 flex flex-wrap gap-3 sm:mt-0"><InstituteButtonLink href="/institute/learning-tracks" variant="primary">View roadmaps</InstituteButtonLink><InstituteButtonLink href="/institute/contact" variant="secondary">Contact TIT</InstituteButtonLink></div></div></section>
+  </>;
+}

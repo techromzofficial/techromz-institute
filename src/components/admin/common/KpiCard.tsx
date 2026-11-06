@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function KpiCard({label,value,href,note="Operational metric"}:{label:string;value:string;href?:string;note?:string}){const content=<><div className="muted">{label}</div><div className="kpi-value">{value}</div><small className="muted">{note}{href?" · View details →":""}</small></>;return href?<Link href={href} className="card">{content}</Link>:<div className="card">{content}</div>}

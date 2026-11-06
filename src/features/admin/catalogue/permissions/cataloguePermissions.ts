@@ -1,0 +1,2 @@
+export const CATALOGUE_PERMISSIONS={view:"catalogue.view",productsView:"products.view",productsManage:"products.manage",productsApprove:"catalogue.products.approve",categoriesManage:"catalogue.categories.manage",attributesManage:"catalogue.attributes.manage",brandsManage:"catalogue.brands.manage",mediaManage:"catalogue.media.manage",qualityView:"catalogue.quality.view",qualityManage:"catalogue.quality.manage",import:"catalogue.import",export:"catalogue.export"}as const;
+export type CataloguePermission=typeof CATALOGUE_PERMISSIONS[keyof typeof CATALOGUE_PERMISSIONS];

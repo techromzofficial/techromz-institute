@@ -1,0 +1,9 @@
+"use client";
+import {usePathname,useRouter,useSearchParams} from "next/navigation";import {useEffect,useState} from "react";
+export function FilterWorkspace({statusOptions=["pending","approved","high-risk"],showAssignment=true}:{statusOptions?:string[];showAssignment?:boolean}){
+ const router=useRouter(),path=usePathname(),params=useSearchParams();const[search,setSearch]=useState(params.get("search")??"");
+ useEffect(()=>{const timer=setTimeout(()=>{if(search===(params.get("search")??""))return;const next=new URLSearchParams(params.toString());search?next.set("search",search):next.delete("search");next.delete("page");router.replace(`${path}${next.size?`?${next}`:""}`,{scroll:false})},350);return()=>clearTimeout(timer)},[search,path,router,params]);
+ function update(name:string,value:string){const next=new URLSearchParams(params.toString());value?next.set(name,value):next.delete(name);next.delete("page");router.replace(`${path}${next.size?`?${next}`:""}`,{scroll:false})}
+ function clear(){setSearch("");const next=new URLSearchParams(params.toString());["search","status","assigned","page"].forEach(key=>next.delete(key));router.replace(`${path}${next.size?`?${next}`:""}`,{scroll:false})}
+ return <div className="workspace" aria-label="Queue filters"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by reference or name" aria-label="Search"/><select aria-label="Status" value={params.get("status")??""} onChange={e=>update("status",e.target.value)}><option value="">All statuses</option>{statusOptions.map(x=><option key={x}>{x}</option>)}</select>{showAssignment&&<select aria-label="Assignment" value={params.get("assigned")??""} onChange={e=>update("assigned",e.target.value)}><option value="">All assignees</option><option value="me">Assigned to me</option><option value="team">My team</option></select>}<button className="button" onClick={clear}>Clear filters</button></div>
+}
