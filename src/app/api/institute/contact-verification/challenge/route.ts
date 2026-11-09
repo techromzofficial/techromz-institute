@@ -6,8 +6,24 @@ import { adminJson } from '@/features/education/administration/http';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
 import { isAllowedSensitiveRequest } from '@/features/education/administration/requestSecurity';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
+import { createLocalCourseEnquiryChallenge, isLocalCourseEnquiryRequest, isLocalCourseEnquiryTestMode } from '@/features/education/administration/localCourseEnquiry';
 
 export async function POST(request: NextRequest) {
+  if (isLocalCourseEnquiryTestMode()) {
+    if (!isLocalCourseEnquiryRequest(request)) return adminJson({ message: 'Local test mode only accepts requests from localhost.' }, 403);
+    let localBody: { type?: unknown; destination?: unknown; purpose?: unknown };
+    try { localBody = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+    const email = typeof localBody.destination === 'string' ? localBody.destination.trim().toLowerCase() : '';
+    if (localBody.type !== 'email' || localBody.purpose !== 'course_enquiry' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return adminJson({ message: 'Invalid verification request.' }, 400);
+    }
+    try {
+      const challenge = createLocalCourseEnquiryChallenge(email);
+      return adminJson({ accepted: true, ...challenge, localTest: true, emailed: false }, 202, { 'Cache-Control': 'no-store' });
+    } catch (error) {
+      return adminJson({ message: error instanceof Error ? error.message : 'Unable to create local verification code.' }, 429);
+    }
+  }
   const deliver = getSmtpEmailDelivery();
   if (!isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request) || !deliver) return adminJson({ message: 'Contact verification is not available.' }, 503);
   let body: { type?: unknown; destination?: unknown; purpose?: unknown }; try { body = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
@@ -29,5 +45,8 @@ export async function POST(request: NextRequest) {
     if (limited) return adminJson({ message: 'Verification is temporarily unavailable.' }, 429, { 'Retry-After': String(limited.retryAfterSeconds) });
     const result = await createContactChallenge(pool, { type: 'email', destination, purpose, deliver });
     return adminJson({ accepted: true, challengeId: result.challengeId }, 202);
-  } catch { return adminJson({ message: 'Verification is temporarily unavailable.' }, 503); }
+  } catch (error) {
+    console.error('[contact-verification] challenge delivery failed', error instanceof Error ? error.name : 'UnknownError');
+    return adminJson({ message: 'Verification is temporarily unavailable.' }, 503);
+  }
 }

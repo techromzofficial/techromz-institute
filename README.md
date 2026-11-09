@@ -11,11 +11,13 @@ npm ci
 npm test
 npm run type-check
 npm run lint
-INSTITUTE_ONLY_MODE=true npm run build
+npm run build
 npm audit
 ```
 
-All Institute write features and indexing are disabled by default. Copy `.env.example` only as a reference; never commit a populated `.env` file.
+The Institute homepage is served at `/` by default. Set `INSTITUTE_ONLY_MODE=false` only when intentionally running the legacy Retail app. All Institute write features and indexing are disabled by default. Copy `.env.example` only as a reference; never commit a populated `.env` file.
+
+For UI-only local course enquiry testing without SMTP or a database, set `INSTITUTE_COURSE_ENQUIRY_LOCAL_TEST_MODE=true` in `.env.local` and run `npm run dev -- --hostname 0.0.0.0 --port 3200`. Set `INSTITUTE_DEV_ALLOWED_ORIGINS` to the computer's private IPv4 address (without a port), then restart the dev server. Open `http://<this-computer-private-ip>:3200` on this computer or another device on the same trusted private network. This mode is development-only, returns the OTP in the modal, and captures enquiries in an in-memory local outbox; it never sends email or persists enquiries. Only loopback and RFC1918 private IPv4 hosts are accepted. Keep this setting false for deployment.
 
 ## Deployment and source synchronization
 

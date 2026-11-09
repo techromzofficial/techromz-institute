@@ -37,6 +37,17 @@ describe('Institute-only deployment routing', () => {
     expect(middleware(requestFor('/institute/community-impact') as never).headers.get('x-middleware-next')).toBe('1');
   });
 
+  it('serves the Institute site by default when the mode variable is unset or empty', async () => {
+    vi.resetModules();
+    vi.stubEnv('INSTITUTE_ONLY_MODE', '');
+    const { middleware } = await import('@/middleware');
+
+    const root = middleware(requestFor('/') as never);
+    expect(root.status).toBe(307);
+    expect(root.headers.get('location')).toBe('https://techromzit.com/institute');
+    expect(middleware(requestFor('/institute') as never).headers.get('x-middleware-next')).toBe('1');
+  });
+
   it('allows only exact public enquiry and contact-verification API routes', async () => {
     const { middleware } = await loadMiddleware(true);
     for (const path of ['/api/institute/course-enquiries', '/api/institute/contact-verification/challenge', '/api/institute/contact-verification/verify']) {
@@ -76,7 +87,7 @@ describe('Institute-only deployment routing', () => {
     }
   });
 
-  it('does not use host or forwarded-host headers to enable Institute-only mode', async () => {
+  it('preserves Retail routing when explicitly configured, regardless of host headers', async () => {
     const { middleware } = await loadMiddleware(false);
     const response = middleware(requestFor('/products', 'techromzit.com') as never);
     expect(response.headers.get('x-middleware-next')).toBe('1');

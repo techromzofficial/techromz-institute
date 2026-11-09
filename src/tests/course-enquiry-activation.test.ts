@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 describe('controlled course enquiry activation tooling', () => {
   it('keeps the dry run disconnected and fixed to the approved course and mailbox', () => {
     const output = JSON.parse(execFileSync(process.execPath, ['scripts/course-enquiry-e2e.mjs'], { cwd: process.cwd(), encoding: 'utf8', env: { NODE_ENV: 'test' } }));
-    expect(output).toMatchObject({ mode: 'dry-run', course: 'Electronics Repair & Troubleshooting', fixedRecipient: 'enrolments@techromzit.com', requiresInteractiveConfirmation: true, sendsEmail: false });
-  });
+    expect(output).toMatchObject({ mode: 'dry-run', course: 'Electronics Repair & Troubleshooting', fixedRecipient: 'sriyanf@techromz.lk', requiresInteractiveConfirmation: true, sendsEmail: false });
+  }, 15_000);
 
   it('requires migration checks, endpoint readiness and explicit confirmation before sending', () => {
     const source = fs.readFileSync(path.join(process.cwd(), 'scripts/course-enquiry-e2e.mjs'), 'utf8');

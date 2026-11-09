@@ -5,8 +5,21 @@ import { adminJson } from '@/features/education/administration/http';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
 import { isAllowedSensitiveRequest } from '@/features/education/administration/requestSecurity';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
+import { isLocalCourseEnquiryRequest, isLocalCourseEnquiryTestMode, verifyLocalCourseEnquiryCode } from '@/features/education/administration/localCourseEnquiry';
 
 export async function POST(request: NextRequest) {
+  if (isLocalCourseEnquiryTestMode()) {
+    if (!isLocalCourseEnquiryRequest(request)) return adminJson({ message: 'Local test mode only accepts requests from localhost.' }, 403);
+    let localBody: { challengeId?: unknown; token?: unknown; purpose?: unknown };
+    try { localBody = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+    if (localBody.purpose !== 'course_enquiry' || typeof localBody.challengeId !== 'string' || typeof localBody.token !== 'string' || !/^\d{6}$/.test(localBody.token)) {
+      return adminJson({ message: 'Invalid or expired verification code.' }, 400);
+    }
+    const result = verifyLocalCourseEnquiryCode(localBody.challengeId, localBody.token);
+    return result.verified
+      ? adminJson({ verified: true, verificationGrant: result.verificationGrant, localTest: true }, 200, { 'Cache-Control': 'no-store' })
+      : adminJson({ message: 'Invalid or expired verification code.' }, 400);
+  }
   if (!isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request)) return adminJson({ message: 'Contact verification is not available.' }, 503);
   let body: { challengeId?: unknown; token?: unknown; purpose?: unknown }; try { body = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
   const purpose = body.purpose === 'registration' ? 'registration' : body.purpose === 'course_enquiry' ? 'course_enquiry' : null;

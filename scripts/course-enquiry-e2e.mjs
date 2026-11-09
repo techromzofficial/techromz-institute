@@ -6,7 +6,7 @@ import mysql from 'mysql2/promise';
 import { readDatabaseConfig } from './institute-provisioning-common.mjs';
 
 const COURSE = 'Electronics Repair & Troubleshooting';
-const RECIPIENT = 'enrolments@techromzit.com';
+const RECIPIENT = process.env.ADMIN_EMAIL?.trim().toLowerCase() || 'sriyanf@techromz.lk';
 const args = process.argv.slice(2);
 if (args.some((value) => !['--dry-run', '--send'].includes(value)) || (args.includes('--dry-run') && args.includes('--send'))) throw new Error('Use either --dry-run or --send.');
 const send = args.includes('--send');

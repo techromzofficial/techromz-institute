@@ -34,6 +34,7 @@ SMTP variables read by `readInstituteSmtpConfig`:
 - `INSTITUTE_SMTP_PASSWORD` — mailbox secret stored only in Hostinger runtime configuration.
 - `INSTITUTE_SMTP_FROM=enrolments@techromzit.com`
 - `INSTITUTE_SMTP_SECURE=true`
+- `ADMIN_EMAIL=sriyanf@techromz.lk` — course-enquiry notification recipient; keep server-side.
 
 Abuse and request validation:
 
@@ -82,7 +83,7 @@ The send mode:
 4. requires the deployed endpoint readiness check to pass;
 5. requires an exact typed confirmation;
 6. sends one purpose-bound verification code, requires it interactively, then submits one fixed `Electronics Repair & Troubleshooting` enquiry through the real API;
-7. uses `enrolments@techromzit.com` as the fixed test email and destination;
+7. sends the verification code to `ADMIN_EMAIL` and sends the enquiry notification to the configured admin recipient;
 8. performs no retry and reports success only after the API receives SMTP provider acceptance.
 
-After acceptance, manually verify the enrolment inbox and spam folder and record receipt time. Provider acceptance is not proof of inbox placement.
+After acceptance, manually verify the configured admin inbox and spam folder and record receipt time. Provider acceptance is not proof of inbox placement.

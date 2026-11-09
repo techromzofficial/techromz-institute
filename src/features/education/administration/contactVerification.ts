@@ -12,12 +12,16 @@ export async function createContactChallenge(pool: Pick<Pool, 'getConnection'>, 
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+    await connection.execute(`DELETE FROM institute_contact_verification_challenges
+      WHERE expires_at <= UTC_TIMESTAMP(6) OR consumed_at < DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 DAY)`);
+    await connection.execute(`DELETE FROM institute_contact_verification_grants
+      WHERE expires_at <= UTC_TIMESTAMP(6) OR consumed_at < DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 DAY)`);
     const contactHash = privateLookupHash(input.destination);
     await connection.execute(`UPDATE institute_contact_verification_challenges SET consumed_at=UTC_TIMESTAMP(6)
       WHERE contact_type=? AND purpose=? AND contact_lookup_hash=? AND consumed_at IS NULL`, [input.type, purpose, contactHash]);
     await connection.execute(`INSERT INTO institute_contact_verification_challenges
       (id, contact_type, purpose, contact_lookup_hash, token_hash, requested_network_hash, expires_at)
-      VALUES (?, ?, ?, ?, ?, NULL, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 10 MINUTE))`, [challengeId, input.type, purpose, contactHash, secretHash(token)]);
+      VALUES (?, ?, ?, ?, ?, NULL, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 5 MINUTE))`, [challengeId, input.type, purpose, contactHash, secretHash(token)]);
     await input.deliver({ type: input.type, destination: input.destination, token });
     await connection.commit(); return { challengeId };
   } catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
@@ -46,4 +50,3 @@ export async function verifyContactChallenge(pool: Pick<Pool, 'getConnection'>, 
     await connection.commit(); return { verified: true, grant };
   } catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
 }
-

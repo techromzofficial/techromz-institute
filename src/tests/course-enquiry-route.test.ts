@@ -45,4 +45,14 @@ describe('course enquiry API orchestration', () => {
     expect(response.status).toBe(200); expect(await response.json()).toMatchObject({ accepted: true, duplicate: true });
     expect(mocks.deliver).not.toHaveBeenCalled();
   });
+
+  it('rejects a course title that is not in the published catalogue', async () => {
+    const { POST } = await import('@/app/api/institute/course-enquiries/route');
+    const request = new NextRequest('https://techromzit.com/api/institute/course-enquiries', { method: 'POST', headers: { 'content-type': 'application/json', host: 'techromzit.com', origin: 'https://techromzit.com' }, body: JSON.stringify({ ...input, courseName: 'Unpublished or forged course' }) });
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: 'Select a currently published course.' });
+    expect(mocks.record).not.toHaveBeenCalled();
+    expect(mocks.deliver).not.toHaveBeenCalled();
+  });
 });

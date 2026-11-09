@@ -25,7 +25,7 @@ describe('Institute SMTP configuration and delivery', () => {
     expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ host: 'smtp.hostinger.com', port: 465, secure: true, tls: { rejectUnauthorized: true, minVersion: 'TLSv1.2' } }));
     const message = sendMail.mock.calls[0]![0];
     expect(message).toMatchObject({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'learner@example.com', subject: 'Your Techromz Institute verification code' });
-    expect(String(message.html)).toContain('123456'); expect(String(message.html)).toContain('10 minutes'); expect(String(message.html)).toContain('info@techromzit.com');
+    expect(String(message.html)).toContain('123456'); expect(String(message.html)).toContain('5 minutes'); expect(String(message.text)).toContain('5 minutes'); expect(String(message.html)).toContain('info@techromzit.com');
     expect(JSON.stringify(message)).not.toContain('mock-only-password');
   });
 
@@ -39,9 +39,12 @@ describe('Institute SMTP configuration and delivery', () => {
 describe('SMTP-backed challenge lifecycle', () => {
   it('does not commit a challenge until the mocked provider accepts the email', async () => {
     vi.stubEnv('INSTITUTE_PII_LOOKUP_KEY', key); vi.stubEnv('INSTITUTE_SESSION_HASH_KEY', key);
-    const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async () => [{ affectedRows: 1 }, []]) };
+    const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async (_sql: string, _values?: unknown[]) => [{ affectedRows: 1 }, []]) };
     await expect(createContactChallenge({ getConnection: async () => connection } as never, { type: 'email', destination: 'learner@example.com', deliver: async () => { throw new Error('SMTP unavailable'); } })).rejects.toThrow('SMTP unavailable');
     expect(connection.commit).not.toHaveBeenCalled(); expect(connection.rollback).toHaveBeenCalledOnce();
+    expect(connection.execute).toHaveBeenCalledWith(expect.stringContaining('INTERVAL 5 MINUTE'), expect.any(Array));
+    expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_challenges'))).toBe(true);
+    expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_grants'))).toBe(true);
     vi.unstubAllEnvs();
   });
 

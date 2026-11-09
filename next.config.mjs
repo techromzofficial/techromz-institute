@@ -23,8 +23,14 @@ const instituteSecurityHeaders = [
 
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  allowedDevOrigins: process.env.NODE_ENV === 'development'
+    ? (process.env.INSTITUTE_DEV_ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => /^[a-zA-Z0-9.-]+$/.test(origin))
+    : [],
   async rewrites() {
-    if (process.env.INSTITUTE_ONLY_MODE === 'true') {
+    if (process.env.INSTITUTE_ONLY_MODE !== 'false') {
       return [];
     }
 

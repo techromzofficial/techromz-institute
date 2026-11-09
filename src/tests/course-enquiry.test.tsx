@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import CourseEnquiryButton from '@/features/education/components/CourseEnquiryButton';
-import { createCourseEnquiryDelivery, validateCourseEnquiry } from '@/features/education/administration/courseEnquiry';
+import { COURSE_ENQUIRY_RECIPIENT, createCourseEnquiryDelivery, readCourseEnquiryRecipient, validateCourseEnquiry } from '@/features/education/administration/courseEnquiry';
 import { readInstituteSmtpConfig } from '@/features/education/administration/smtp';
 
 const smtpEnvironment = { INSTITUTE_SMTP_HOST: 'smtp.hostinger.com', INSTITUTE_SMTP_PORT: '465', INSTITUTE_SMTP_USER: 'enrolments@techromzit.com', INSTITUTE_SMTP_PASSWORD: 'test-only', INSTITUTE_SMTP_FROM: 'enrolments@techromzit.com', INSTITUTE_SMTP_SECURE: 'true' } as unknown as NodeJS.ProcessEnv;
@@ -16,11 +16,22 @@ describe('course enquiry delivery', () => {
   });
 
   it('uses a fixed recipient and sender, validated reply-to and provider acknowledgement', async () => {
-    const sendMail = vi.fn(async (_message: Record<string, unknown>) => ({ accepted: ['enrolments@techromzit.com'], rejected: [] }));
+    const sendMail = vi.fn(async (_message: Record<string, unknown>) => ({ accepted: [COURSE_ENQUIRY_RECIPIENT], rejected: [] }));
     const deliver = createCourseEnquiryDelivery(readInstituteSmtpConfig(smtpEnvironment), () => ({ sendMail }));
     await deliver({ fullName: 'Student Name', email: 'student@example.com', courseName: 'AI Kickstart', message: '<Please> send details.' }, new Date('2026-11-06T10:00:00Z'));
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'enrolments@techromzit.com', replyTo: 'student@example.com', subject: 'Course Enquiry - AI Kickstart', envelope: { from: 'enrolments@techromzit.com', to: ['enrolments@techromzit.com'] } }));
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'sriyanf@techromz.lk', replyTo: 'student@example.com', subject: 'New Course Enquiry - AI Kickstart', envelope: { from: 'enrolments@techromzit.com', to: ['sriyanf@techromz.lk'] } }));
     expect(String(sendMail.mock.calls[0]![0].html)).toContain('&lt;Please&gt;');
+    expect(String(sendMail.mock.calls[0]![0].html)).toContain('New Student Course Enquiry');
+    expect(String(sendMail.mock.calls[0]![0].text)).toContain('Submission Date:');
+  });
+
+  it('uses the configured server-only admin recipient and rejects malformed addresses', () => {
+    expect(COURSE_ENQUIRY_RECIPIENT).toBe('sriyanf@techromz.lk');
+    vi.stubEnv('ADMIN_EMAIL', 'admin@example.com');
+    expect(readCourseEnquiryRecipient()).toBe('admin@example.com');
+    vi.stubEnv('ADMIN_EMAIL', 'admin@example.com\r\nBcc:attacker@example.com');
+    expect(() => readCourseEnquiryRecipient()).toThrow();
+    vi.unstubAllEnvs();
   });
 
   it('opens an accessible form with the selected course and preserves values on failure', async () => {

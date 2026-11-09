@@ -9,6 +9,11 @@ describe('Institute-only deployment rewrites', () => {
     expect(await nextConfig.rewrites?.()).toEqual([]);
   });
 
+  it('disables API proxy rewrites by default', async () => {
+    vi.stubEnv('INSTITUTE_ONLY_MODE', '');
+    expect(await nextConfig.rewrites?.()).toEqual([]);
+  });
+
   it('preserves the existing API proxy in default Retail mode', async () => {
     vi.stubEnv('INSTITUTE_ONLY_MODE', 'false');
     vi.stubEnv('BACKEND_API_URL', 'https://api.example.test/api/');

@@ -3,7 +3,7 @@ import { loginUrlFor } from './lib/authRedirect';
 import { instituteIndexingEnabled } from './features/education/config/site';
 
 const COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE || '_el_tok';
-const INSTITUTE_ONLY_MODE = process.env.INSTITUTE_ONLY_MODE === 'true';
+const INSTITUTE_ONLY_MODE = process.env.INSTITUTE_ONLY_MODE !== 'false';
 
 const INSTITUTE_PAGES = new Set([
   '/institute',
@@ -70,6 +70,7 @@ function isInstituteResource(pathname) {
 function isInstitutePublicApi(pathname) {
   return pathname === '/api/institute/certificates/verify' ||
     pathname === '/api/institute/course-enquiries' ||
+    pathname === '/api/institute/course-enquiries/local-outbox' ||
     pathname === '/api/institute/contact-verification/challenge' ||
     pathname === '/api/institute/contact-verification/verify' ||
     pathname === '/api/institute/registrations' ||
