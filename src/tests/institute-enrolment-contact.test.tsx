@@ -17,6 +17,7 @@ const expectedDepartmentOrder = [
 describe('Institute department navigation and enrolment contact', () => {
   it('places Electronics & Engineering fourth in desktop and mobile department navigation', () => {
     render(<EducationHeader />);
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle departments menu' }));
     const desktop = screen.getByRole('navigation', { name: 'Institute navigation' });
     const desktopDepartments = within(desktop).getAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/institute/departments/'));
     expect(desktopDepartments.map((link) => link.textContent)).toEqual(expectedDepartmentOrder);

@@ -118,6 +118,8 @@ export function recordLocalCourseEnquiry(input: CourseEnquiry & { verificationGr
     fullName: input.fullName,
     email: input.email,
     ...(input.phone ? { phone: input.phone } : {}),
+    courseId: input.courseId,
+    subject: input.subject,
     courseName: input.courseName,
     message: input.message,
     submittedAt: new Date(now).toISOString(),

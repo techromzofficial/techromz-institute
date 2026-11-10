@@ -14,6 +14,7 @@ vi.mock('@/features/education/administration/config', () => ({ isInstituteFeatur
 vi.mock('@/features/education/database/pool', () => ({ getInstituteDatabasePool: () => pool }));
 vi.mock('@/features/education/administration/smtp', () => ({ getSmtpEmailDelivery }));
 vi.mock('@/features/education/administration/contactVerification', () => ({
+  ContactChallengeRateLimitError: class extends Error {},
   createContactChallenge: vi.fn(async () => ({ challengeId: '8fa27d53-a458-4fba-a295-7103d610f635' })),
   verifyContactChallenge: vi.fn(async () => ({ verified: false })),
 }));
@@ -80,7 +81,7 @@ describe('IP-independent Hostinger abuse protection', () => {
 
   it('uses challenge and account identifiers plus shared global limits', async () => {
     const challengeId = '8fa27d53-a458-4fba-a295-7103d610f635';
-    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry' }));
+    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry' }, { ...standardHeaders, cookie: `institute_enquiry_session=${'S'.repeat(43)}` }));
     await login(post('/api/institute/admin/auth/login', { username: 'admin.user', password: 'not-a-real-password' }));
     expect(limiterCalls()).toEqual([
       ['global', 'contact.verify.global'], [challengeId, 'contact.verify.challenge'],

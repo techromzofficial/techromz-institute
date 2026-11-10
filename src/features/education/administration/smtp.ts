@@ -1,7 +1,7 @@
 import 'server-only';
 import nodemailer from 'nodemailer';
 import type { ContactDelivery } from './contactVerification';
-import { APPROVED_SMTP_HOST, APPROVED_SMTP_PORT, APPROVED_SMTP_SENDER, hostingerSmtpTransportOptions } from './smtpRuntime.mjs';
+import { APPROVED_SMTP_HOST, APPROVED_SMTP_PORT, hostingerSmtpTransportOptions } from './smtpRuntime.mjs';
 
 export interface InstituteSmtpConfig { host: string; port: number; user: string; password: string; from: string; secure: true; }
 export class InstituteSmtpConfigurationError extends Error {}
@@ -14,7 +14,7 @@ export function readInstituteSmtpConfig(environment: NodeJS.ProcessEnv = process
   const from = environment.INSTITUTE_SMTP_FROM?.trim().toLowerCase();
   const secure = environment.INSTITUTE_SMTP_SECURE;
   if (host !== APPROVED_SMTP_HOST || port !== APPROVED_SMTP_PORT || secure !== 'true') throw new InstituteSmtpConfigurationError('Institute SMTP must use the approved Hostinger TLS endpoint.');
-  if (user !== APPROVED_SMTP_SENDER || from !== APPROVED_SMTP_SENDER) throw new InstituteSmtpConfigurationError('Institute SMTP must use the approved enrolments sender.');
+  if (!user || !isEmail(user) || from !== user) throw new InstituteSmtpConfigurationError('SMTP From must match the authenticated mailbox.');
   if (!password?.trim()) throw new InstituteSmtpConfigurationError('Missing required server-only SMTP credentials.');
   return { host, port, user, password, from, secure: true };
 }
@@ -23,13 +23,13 @@ type MailTransport = { sendMail(message: Record<string, unknown>): Promise<{ acc
 type TransportFactory = (options: Record<string, unknown>) => MailTransport;
 
 export function createSmtpEmailDelivery(config: InstituteSmtpConfig, createTransport: TransportFactory = nodemailer.createTransport as TransportFactory): ContactDelivery {
-  const transport = createTransport(hostingerSmtpTransportOptions(config.password));
-  return async ({ type, destination, token }) => {
+  const transport = createTransport(hostingerSmtpTransportOptions(config.password, config.user));
+  return async ({ type, destination, token, purpose }) => {
     if (type !== 'email' || !isEmail(destination) || !/^\d{6}$/.test(token)) throw new Error('SMTP_DELIVERY_REJECTED');
     const normalized = destination.trim().toLowerCase();
     const result = await transport.sendMail({
       from: `Techromz Institute <${config.from}>`, to: normalized,
-      subject: 'Your Techromz Institute verification code',
+      subject: purpose === 'course_enquiry' ? 'Verify Your Email - Techromz IT Course Enquiry' : 'Your Techromz Institute verification code',
       text: verificationText(token), html: verificationHtml(token),
       envelope: { from: config.from, to: [normalized] },
       headers: { 'X-Entity-Ref-ID': 'institute-contact-verification', 'Auto-Submitted': 'auto-generated' },
@@ -43,7 +43,7 @@ export function getSmtpEmailDelivery(environment: NodeJS.ProcessEnv = process.en
   try { return createSmtpEmailDelivery(readInstituteSmtpConfig(environment)); } catch { return null; }
 }
 
-function isEmail(value: string) { const email = value.trim(); return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+function isEmail(value: string) { const email = value.trim(); return email.length <= 254 && /^[^\s@<>,;:\"()\[\]\\\x00-\x1f\x7f]+@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/.test(email); }
 function verificationText(code: string) {
   return `Techromz Institute\n\nYour one-time verification code is: ${code}\n\nThis code expires in 5 minutes. Do not share it with anyone. Techromz Institute will never ask you to send this code by email or message.\n\nIf you did not request this code, you can ignore this email.\n\nQuestions? Contact info@techromzit.com`;
 }

@@ -31,7 +31,7 @@ function CourseHeroImage({ details }: { details: EducationPlannedCourseDetails }
 
 function InterestButtons({ course, notice }: { course: EducationCourse; notice: string }) {
   const contact = getInstituteContactLinks(course.title);
-  return <><div className="flex flex-col gap-3 sm:flex-row"><InstituteButtonLink href={contact.whatsapp} variant="whatsapp" external ariaLabel={`Register your interest in ${course.title} on WhatsApp`}><MessageCircle size={18} aria-hidden="true" /> Register Your Interest</InstituteButtonLink><CourseEnquiryButton courseName={course.title} /></div><p className="mt-4 max-w-2xl text-xs leading-5 text-current opacity-80">{notice}</p></>;
+  return <><div className="flex flex-col gap-3 sm:flex-row"><InstituteButtonLink href={contact.whatsapp} variant="whatsapp" external ariaLabel={`Register your interest in ${course.title} on WhatsApp`}><MessageCircle size={18} aria-hidden="true" /> Register Your Interest</InstituteButtonLink><CourseEnquiryButton courseId={course.slug} courseName={course.title} /></div><p className="mt-4 max-w-2xl text-xs leading-5 text-current opacity-80">{notice}</p></>;
 }
 
 function CourseAdmissionsAndDetails({ course, details, notice }: { course: EducationCourse; details: EducationPlannedCourseDetails; notice: string }) {

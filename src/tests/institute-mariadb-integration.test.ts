@@ -1,3 +1,5 @@
+import { recordCourseEnquiry } from '@/features/education/administration/courseEnquiryStore';
+import { dispatchCourseEnquiries } from '@/features/education/administration/courseEnquiryDelivery';
 import { randomUUID } from 'node:crypto';
 import mysql, { type Pool } from 'mysql2/promise';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -42,7 +44,7 @@ suite('MariaDB 11.8.9 Institute integration', () => {
     const [[version]] = await pool.query<mysql.RowDataPacket[]>('SELECT VERSION() AS version');
     expect(version.version).toMatch(/^11\.8\.9-MariaDB/);
     const [migrations] = await pool.query<mysql.RowDataPacket[]>('SELECT migration_name, sha256 FROM institute_schema_migrations ORDER BY migration_name');
-    expect(migrations.map((row) => row.migration_name)).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql']);
+    expect(migrations.map((row) => row.migration_name)).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql', '006_institute_enquiry_delivery.sql']);
     expect(migrations.every((row) => /^[a-f0-9]{64}$/.test(row.sha256))).toBe(true);
     const [[engines]] = await pool.query<mysql.RowDataPacket[]>(`SELECT COUNT(*) AS non_innodb FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name LIKE 'institute_%' AND engine <> 'InnoDB'`);
     expect(Number(engines.non_innodb)).toBe(0);
@@ -167,4 +169,21 @@ suite('MariaDB 11.8.9 Institute integration', () => {
     expect(result).toMatchObject({ certificateId, courseName: 'Integration Course', status: 'valid', issuerName: 'Techromz Institute' });
     expect(result).not.toHaveProperty('finalAssessmentScore');
   });
+  it('atomically verifies and stores one enquiry under concurrent requests, then delivers it once with mocked SMTP', async () => {
+    const session = randomUUID(), email = `${randomUUID()}@example.com`;
+    let token = '';
+    const challenge = await createContactChallenge(pool, { type: 'email', destination: email, purpose: 'course_enquiry', session, deliver: async (message) => { token = message.token; } });
+    const verifications = await Promise.all(Array.from({ length: 4 }, () => verifyContactChallenge(pool, { challengeId: challenge.challengeId, token, purpose: 'course_enquiry', session })));
+    expect(verifications.filter(result => result.verified)).toHaveLength(1);
+    const input = { fullName: 'Integration Enquiry Student', email, courseId: 'electronics-repair-troubleshooting', courseName: 'Electronics Repair & Troubleshooting', subject: 'Integration check', message: 'This test uses mocked SMTP only.', verificationGrant: verifications.find(result => result.verified)!.grant!, idempotencyKey: randomUUID() };
+    const stored = await Promise.all(Array.from({ length: 3 }, () => recordCourseEnquiry(pool, input, session)));
+    expect(new Set(stored.map(result => result.enquiryId)).size).toBe(1);
+    expect(stored.filter(result => !result.duplicate)).toHaveLength(1);
+    let sends = 0;
+    await Promise.all(Array.from({ length: 3 }, () => dispatchCourseEnquiries(pool, async (enquiry) => { expect(enquiry.email).toBe(email); sends++; }, 1, stored[0]!.enquiryId)));
+    expect(sends).toBe(1);
+    const [[row]] = await pool.query<mysql.RowDataPacket[]>('SELECT notification_status, delivery_attempts FROM institute_course_enquiries WHERE id=?', [stored[0]!.enquiryId]);
+    expect(row.notification_status).toBe('notified'); expect(row.delivery_attempts).toBe(1);
+  });
+
 });

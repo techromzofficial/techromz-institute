@@ -6,13 +6,13 @@ import mysql from 'mysql2/promise';
 import { readDatabaseConfig } from './institute-provisioning-common.mjs';
 
 const COURSE = 'Electronics Repair & Troubleshooting';
-const RECIPIENT = process.env.ADMIN_EMAIL?.trim().toLowerCase() || 'sriyanf@techromz.lk';
+const RECIPIENT = 'enrolments@techromzit.com';
 const args = process.argv.slice(2);
 if (args.some((value) => !['--dry-run', '--send'].includes(value)) || (args.includes('--dry-run') && args.includes('--send'))) throw new Error('Use either --dry-run or --send.');
 const send = args.includes('--send');
 
 if (!send) {
-  process.stdout.write(`${JSON.stringify({ mode: 'dry-run', course: COURSE, fixedRecipient: RECIPIENT, originSource: 'NEXT_PUBLIC_APP_URL', checksDatabaseMigrations: ['001', '002', '003', '004', '005'], checksEndpointReadiness: true, requiresContactVerification: true, requiresInteractiveConfirmation: true, sendsEmail: false }, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({ mode: 'dry-run', course: COURSE, fixedRecipient: RECIPIENT, originSource: 'NEXT_PUBLIC_APP_URL', checksDatabaseMigrations: ['001', '002', '003', '004', '005', '006'], checksEndpointReadiness: true, requiresContactVerification: true, requiresInteractiveConfirmation: true, sendsEmail: false }, null, 2)}\n`);
   process.exit(0);
 }
 if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('The course enquiry end-to-end test requires an interactive TTY.');
@@ -37,6 +37,9 @@ try {
   });
   const challenge = await challengeResponse.json().catch(() => ({}));
   if (challengeResponse.status !== 202 || challenge.accepted !== true) throw new Error(`Verification challenge was not accepted (${challengeResponse.status}).`);
+  const cookie = challengeResponse.headers.get('set-cookie')?.split(';')[0];
+  if (!cookie) throw new Error('Enquiry session cookie was not issued.');
+  headers.Cookie = cookie;
   const token = (await terminal.question(`Enter the six-digit verification code delivered to ${RECIPIENT}: `)).trim();
   if (!/^\d{6}$/.test(token)) throw new Error('A six-digit verification code is required.');
   const verificationResponse = await fetch(new URL('/api/institute/contact-verification/verify', origin), {
@@ -50,11 +53,11 @@ try {
 
 const response = await fetch(endpoint, {
   method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-  body: JSON.stringify({ fullName: 'Techromz Institute Controlled Test', email: RECIPIENT, phone: '', courseName: COURSE, message: 'Controlled Hostinger activation test for the course enquiry service. No response is required.', website: '', verificationGrant, idempotencyKey: crypto.randomUUID() }),
+  body: JSON.stringify({ fullName: 'Techromz Institute Controlled Test', email: RECIPIENT, phone: '', courseId: 'electronics-repair-troubleshooting', subject: 'Controlled SMTP test', courseName: COURSE, message: 'Controlled Hostinger activation test for the course enquiry service. No response is required.', website: '', verificationGrant, idempotencyKey: crypto.randomUUID() }),
 });
 const body = await response.json().catch(() => ({}));
 if (response.status !== 202 || body.accepted !== true) throw new Error(`Course enquiry test was not accepted (${response.status}): ${body.message ?? 'unknown response'}`);
-process.stdout.write(`SMTP provider accepted one controlled ${COURSE} enquiry for ${RECIPIENT}. Verify inbox and spam-folder receipt manually.\n`);
+process.stdout.write(`Saved and queued one controlled ${COURSE} enquiry for ${RECIPIENT}. Run the delivery worker, inspect notification status, then verify inbox and spam-folder receipt manually.\n`);
 
 async function assertDatabaseReady() {
   const connection = await mysql.createConnection(readDatabaseConfig(process.env));

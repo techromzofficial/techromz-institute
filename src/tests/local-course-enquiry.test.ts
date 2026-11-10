@@ -59,7 +59,7 @@ describe('local-only course enquiry test mode', () => {
     const entry = {
       fullName: 'Test Student',
       email: 'student@example.com',
-      courseName: 'Electronics Repair & Troubleshooting',
+      courseId: 'electronics-repair-troubleshooting', subject: 'Course details', courseName: 'Electronics Repair & Troubleshooting',
       message: 'Please send the course details.',
       verificationGrant: verification.verificationGrant!,
       idempotencyKey: '2ed25e4a-37c7-4a65-8ad6-4debdff178f6',

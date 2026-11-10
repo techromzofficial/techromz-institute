@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { consumeSharedRateLimit, createContactChallenge, getSmtpEmailDelivery } = vi.hoisted(() => ({ consumeSharedRateLimit: vi.fn(), createContactChallenge: vi.fn(), getSmtpEmailDelivery: vi.fn() }));
 vi.mock('@/features/education/administration/config', () => ({ isInstituteFeatureEnabled: () => true }));
 vi.mock('@/features/education/administration/rateLimit', () => ({ isIdentifierRateLimitMode: () => true, consumeSharedRateLimit }));
-vi.mock('@/features/education/administration/contactVerification', () => ({ createContactChallenge }));
+vi.mock('@/features/education/administration/contactVerification', () => ({ createContactChallenge, ContactChallengeRateLimitError: class extends Error {} }));
 vi.mock('@/features/education/administration/smtp', () => ({ getSmtpEmailDelivery }));
 vi.mock('@/features/education/database/pool', () => ({ getInstituteDatabasePool: () => ({ test: true }) }));
 
@@ -24,12 +24,13 @@ describe('contact verification challenge API', () => {
 
   it('uses global, resend, destination and conservative mailbox limits before neutral acceptance', async () => {
     const response = await POST(request());
-    expect(response.status).toBe(202); expect(await response.json()).toEqual({ accepted: true, challengeId: '8fa27d53-a458-4fba-a295-7103d610f635' });
+    expect(response.status).toBe(202); expect(await response.json()).toEqual({ accepted: true, challengeId: '8fa27d53-a458-4fba-a295-7103d610f635', resendAfterSeconds: 60 });
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly');
     expect(consumeSharedRateLimit).toHaveBeenCalledTimes(4);
     expect(createContactChallenge).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ purpose: 'course_enquiry' }));
     expect(consumeSharedRateLimit.mock.calls.map((call) => call[2])).toEqual(expect.arrayContaining([
-      expect.objectContaining({ scope: 'contact.challenge.cooldown', maximum: 1, windowSeconds: 120 }),
-      expect.objectContaining({ scope: 'contact.challenge.destination24h', maximum: 5, windowSeconds: 86_400 }),
+      expect.objectContaining({ scope: 'contact.challenge.cooldown', maximum: 1, windowSeconds: 60 }),
+      expect.objectContaining({ scope: 'contact.challenge.destination24h', maximum: 12, windowSeconds: 86_400 }),
       expect.objectContaining({ scope: 'contact.challenge.mailbox24h', maximum: 45, windowSeconds: 86_400 }),
     ]));
   });

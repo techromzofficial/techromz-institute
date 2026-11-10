@@ -1,40 +1,36 @@
+import { readEnquirySession } from '@/features/education/administration/enquirySession';
 import { NextRequest } from 'next/server';
 import { isInstituteFeatureEnabled } from '@/features/education/administration/config';
 import { verifyContactChallenge } from '@/features/education/administration/contactVerification';
-import { adminJson } from '@/features/education/administration/http';
+import { adminJson, readBoundedJson } from '@/features/education/administration/http';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
-import { isAllowedSensitiveRequest } from '@/features/education/administration/requestSecurity';
+import { isAllowedSensitiveRequest, trustedClientIp } from '@/features/education/administration/requestSecurity';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
-import { isLocalCourseEnquiryRequest, isLocalCourseEnquiryTestMode, verifyLocalCourseEnquiryCode } from '@/features/education/administration/localCourseEnquiry';
 
 export async function POST(request: NextRequest) {
-  if (isLocalCourseEnquiryTestMode()) {
-    if (!isLocalCourseEnquiryRequest(request)) return adminJson({ message: 'Local test mode only accepts requests from localhost.' }, 403);
-    let localBody: { challengeId?: unknown; token?: unknown; purpose?: unknown };
-    try { localBody = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
-    if (localBody.purpose !== 'course_enquiry' || typeof localBody.challengeId !== 'string' || typeof localBody.token !== 'string' || !/^\d{6}$/.test(localBody.token)) {
-      return adminJson({ message: 'Invalid or expired verification code.' }, 400);
-    }
-    const result = verifyLocalCourseEnquiryCode(localBody.challengeId, localBody.token);
-    return result.verified
-      ? adminJson({ verified: true, verificationGrant: result.verificationGrant, localTest: true }, 200, { 'Cache-Control': 'no-store' })
-      : adminJson({ message: 'Invalid or expired verification code.' }, 400);
-  }
+
   if (!isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request)) return adminJson({ message: 'Contact verification is not available.' }, 503);
-  let body: { challengeId?: unknown; token?: unknown; purpose?: unknown }; try { body = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+  let body: { challengeId?: unknown; token?: unknown; purpose?: unknown }; try { body = await readBoundedJson(request) as typeof body; } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return adminJson({ message: 'Invalid verification request.' }, 400);
   const purpose = body.purpose === 'registration' ? 'registration' : body.purpose === 'course_enquiry' ? 'course_enquiry' : null;
   const enabled = purpose === 'registration' ? isInstituteFeatureEnabled('registration') : purpose === 'course_enquiry' ? isInstituteFeatureEnabled('courseEnquiry') : false;
   if (!purpose || !enabled) return adminJson({ message: 'Contact verification is not available.' }, 503);
   if (typeof body.challengeId !== 'string' || !/^[0-9a-f-]{36}$/i.test(body.challengeId) || typeof body.token !== 'string' || !/^\d{6}$/.test(body.token)) return adminJson({ message: 'Invalid or expired verification code.' }, 400);
+  if (purpose === 'course_enquiry' && !readEnquirySession(request)) return adminJson({ message: 'Invalid or expired verification code.' }, 400);
   try {
     const pool = getInstituteDatabasePool();
+    const clientIp = trustedClientIp(request, process.env, purpose === 'course_enquiry');
+    if (clientIp) {
+      const ipLimit = await consumeSharedRateLimit(pool, clientIp, { scope: 'contact.verify.ip', maximum: 60, windowSeconds: 900 });
+      if (!ipLimit.allowed) return adminJson({ message: 'Too many requests. Please try again later.' }, 429, { 'Retry-After': String(ipLimit.retryAfterSeconds) });
+    }
     const limits = await Promise.all([
       consumeSharedRateLimit(pool, 'global', { scope: 'contact.verify.global', maximum: 300, windowSeconds: 900 }),
       consumeSharedRateLimit(pool, body.challengeId, { scope: 'contact.verify.challenge', maximum: 6, windowSeconds: 900 }),
     ]);
     const limited = limits.find((entry) => !entry.allowed);
     if (limited) return adminJson({ message: 'Invalid or expired verification code.' }, 429, { 'Retry-After': String(limited.retryAfterSeconds) });
-    const result = await verifyContactChallenge(pool, { challengeId: body.challengeId, token: body.token, purpose });
+    const result = await verifyContactChallenge(pool, { challengeId: body.challengeId, token: body.token, purpose, session: readEnquirySession(request) });
     return result.verified ? adminJson({ verified: true, verificationGrant: result.grant }) : adminJson({ message: 'Invalid or expired verification code.' }, 400);
   } catch { return adminJson({ message: 'Verification is temporarily unavailable.' }, 503); }
 }

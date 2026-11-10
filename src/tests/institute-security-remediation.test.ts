@@ -32,6 +32,7 @@ describe('Phase 3 security remediation', () => {
     let stored: unknown[] = []; let consumed = false; const statements: string[] = [];
     const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async (sql: string, values: unknown[]) => {
       statements.push(sql);
+      if (sql.startsWith('DELETE FROM institute_contact_verification_')) return [{ affectedRows: 0 }, []];
       if (sql.startsWith('UPDATE institute_contact_verification_challenges SET consumed_at=UTC_TIMESTAMP')) return [{ affectedRows: 0 }, []];
       if (sql.startsWith('INSERT INTO institute_contact_verification_challenges')) { stored = values; return [{ affectedRows: 1 }, []]; }
       if (sql.startsWith('SELECT contact_type')) return consumed ? [[], []] : [[{ contact_type: 'email', purpose: 'registration', contact_lookup_hash: stored[3], token_hash: stored[4], requested_network_hash: stored[5], failed_attempts: 0 }], []];

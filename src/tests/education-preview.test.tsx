@@ -138,7 +138,7 @@ describe('Education preview catalogue', () => {
     const title = 'Arduino for Beginners Bundle';
     const links = getInstituteContactLinks(title);
     expect(links.whatsapp).toBe('https://wa.me/94773663604?text=Hello%20Techromz%20Institute%2C%20I%20am%20interested%20in%20the%20Arduino%20for%20Beginners%20Bundle.');
-    render(<EnquiryUnavailable courseTitle={title} />);
+    render(<EnquiryUnavailable courseId="arduino-for-beginners-bundle" courseTitle={title} />);
     expect(screen.getByRole('heading', { name: 'Express interest' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', links.whatsapp);
     expect(screen.getByRole('button', { name: /Email enquiry/ })).toBeInTheDocument();

@@ -1,51 +1,48 @@
+import { readEnquirySession, newEnquirySession, setEnquirySession } from '@/features/education/administration/enquirySession';
 import { NextRequest } from 'next/server';
 import { isInstituteFeatureEnabled } from '@/features/education/administration/config';
-import { createContactChallenge } from '@/features/education/administration/contactVerification';
+import { ContactChallengeRateLimitError, createContactChallenge } from '@/features/education/administration/contactVerification';
 import { getSmtpEmailDelivery } from '@/features/education/administration/smtp';
-import { adminJson } from '@/features/education/administration/http';
+import { adminJson, readBoundedJson } from '@/features/education/administration/http';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
-import { isAllowedSensitiveRequest } from '@/features/education/administration/requestSecurity';
+import { isAllowedSensitiveRequest, trustedClientIp } from '@/features/education/administration/requestSecurity';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
-import { createLocalCourseEnquiryChallenge, isLocalCourseEnquiryRequest, isLocalCourseEnquiryTestMode } from '@/features/education/administration/localCourseEnquiry';
 
 export async function POST(request: NextRequest) {
-  if (isLocalCourseEnquiryTestMode()) {
-    if (!isLocalCourseEnquiryRequest(request)) return adminJson({ message: 'Local test mode only accepts requests from localhost.' }, 403);
-    let localBody: { type?: unknown; destination?: unknown; purpose?: unknown };
-    try { localBody = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
-    const email = typeof localBody.destination === 'string' ? localBody.destination.trim().toLowerCase() : '';
-    if (localBody.type !== 'email' || localBody.purpose !== 'course_enquiry' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return adminJson({ message: 'Invalid verification request.' }, 400);
-    }
-    try {
-      const challenge = createLocalCourseEnquiryChallenge(email);
-      return adminJson({ accepted: true, ...challenge, localTest: true, emailed: false }, 202, { 'Cache-Control': 'no-store' });
-    } catch (error) {
-      return adminJson({ message: error instanceof Error ? error.message : 'Unable to create local verification code.' }, 429);
-    }
-  }
+
   const deliver = getSmtpEmailDelivery();
   if (!isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request) || !deliver) return adminJson({ message: 'Contact verification is not available.' }, 503);
-  let body: { type?: unknown; destination?: unknown; purpose?: unknown }; try { body = await request.json(); } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+  let body: { type?: unknown; destination?: unknown; purpose?: unknown }; try { body = await readBoundedJson(request) as typeof body; } catch { return adminJson({ message: 'Invalid verification request.' }, 400); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return adminJson({ message: 'Invalid verification request.' }, 400);
   const purpose = body.purpose === 'registration' ? 'registration' : body.purpose === 'course_enquiry' ? 'course_enquiry' : null;
   const enabled = purpose === 'registration' ? isInstituteFeatureEnabled('registration') : purpose === 'course_enquiry' ? isInstituteFeatureEnabled('courseEnquiry') : false;
   if (!purpose || !enabled) return adminJson({ message: 'Contact verification is not available.' }, 503);
   if (body.type !== 'email' || typeof body.destination !== 'string' || body.destination.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.destination.trim())) return adminJson({ message: 'Invalid verification request.' }, 400);
   try {
-    const pool = getInstituteDatabasePool(); const destination = body.destination.trim().toLowerCase();
+    const pool = getInstituteDatabasePool();
+    const clientIp = trustedClientIp(request, process.env, purpose === 'course_enquiry');
+    if (clientIp) {
+      const ipLimit = await consumeSharedRateLimit(pool, clientIp, { scope: 'contact.challenge.ip', maximum: 20, windowSeconds: 900 });
+      if (!ipLimit.allowed) return adminJson({ message: 'Too many requests. Please try again later.' }, 429, { 'Retry-After': String(ipLimit.retryAfterSeconds) });
+    }
+    const destination = body.destination.trim().toLowerCase();
     const policies = await Promise.all([
       consumeSharedRateLimit(pool, 'global', { scope: 'contact.challenge.global', maximum: 120, windowSeconds: 900 }),
-      consumeSharedRateLimit(pool, destination, { scope: 'contact.challenge.cooldown', maximum: 1, windowSeconds: 120 }),
-      consumeSharedRateLimit(pool, destination, { scope: 'contact.challenge.destination24h', maximum: 5, windowSeconds: 86_400 }),
+      consumeSharedRateLimit(pool, destination, { scope: 'contact.challenge.cooldown', maximum: 1, windowSeconds: 60 }),
+      consumeSharedRateLimit(pool, destination, { scope: 'contact.challenge.destination24h', maximum: 12, windowSeconds: 86_400 }),
       // A 45-message fixed window remains below 100 even when a rolling day overlaps
       // the edges of two windows (maximum 90 accepted attempts).
       consumeSharedRateLimit(pool, 'enrolments-mailbox', { scope: 'contact.challenge.mailbox24h', maximum: 45, windowSeconds: 86_400 }),
     ]);
     const limited = policies.find((policy) => !policy.allowed);
     if (limited) return adminJson({ message: 'Verification is temporarily unavailable.' }, 429, { 'Retry-After': String(limited.retryAfterSeconds) });
-    const result = await createContactChallenge(pool, { type: 'email', destination, purpose, deliver });
-    return adminJson({ accepted: true, challengeId: result.challengeId }, 202);
+    const session = purpose === 'course_enquiry' ? readEnquirySession(request) ?? newEnquirySession() : undefined;
+    const result = await createContactChallenge(pool, { type: 'email', destination, purpose, session, deliver });
+    const response = adminJson({ accepted: true, challengeId: result.challengeId, resendAfterSeconds: 60 }, 202);
+    if (session) setEnquirySession(response, session);
+    return response;
   } catch (error) {
+    if (error instanceof ContactChallengeRateLimitError) return adminJson({ message: error.message }, 429, { 'Retry-After': String(error.retryAfterSeconds) });
     console.error('[contact-verification] challenge delivery failed', error instanceof Error ? error.name : 'UnknownError');
     return adminJson({ message: 'Verification is temporarily unavailable.' }, 503);
   }
