@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import CourseDetailPage, { generateMetadata } from '@/app/institute/courses/[slug]/page';
 import { getInstituteContactLinks } from '@/features/education/config/contact';
@@ -22,6 +22,11 @@ describe('AI course naming and visibility', () => {
     expect(screen.getAllByText(/Maximum 30 students per course/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/cohort/i)).not.toBeInTheDocument();
     expect(screen.getByText('Live Online via Zoom')).toBeInTheDocument();
+    const courseDetails = screen.getByRole('heading', { name: 'Course details' }).closest('aside');
+    expect(courseDetails).not.toBeNull();
+    const alignedSection = courseDetails!.parentElement!;
+    expect(alignedSection).toHaveClass('max-w-5xl');
+    expect(within(alignedSection).getByText('Admissions')).toBeInTheDocument();
     expect(screen.getByText('Sinhala')).toBeInTheDocument();
     expect(screen.getByText(/1 December 2026 · 5:30 PM – 7:30 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My AI Study Assistant' })).toBeInTheDocument();
