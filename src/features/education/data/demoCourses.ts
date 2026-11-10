@@ -1,4 +1,4 @@
-import type { EducationCourse } from '../contracts/course';
+import { BEGINNER_SESSION_ADMISSIONS, type EducationCourse } from '../contracts/course';
 import { ARDUINO_BUNDLE_SCHEDULE, RETAIL_KICKSTART_SCHEDULE } from '../config/contact';
 
 export const DEMO_COURSES: EducationCourse[] = [
@@ -132,6 +132,7 @@ export const DEMO_COURSES: EducationCourse[] = [
         { question: 'What are the confirmed course arrangements?', answer: 'The fee is LKR 7,500. The first online Zoom session is from 5:30 PM to 7:30 PM Sri Lanka Time on 1 December 2026, and teaching is in Sinhala.' },
         { question: 'Does registering interest reserve a seat?', answer: 'No. Registering interest does not reserve a seat. Confirmed enrolment instructions will be shared separately.' },
       ],
+      admissions: BEGINNER_SESSION_ADMISSIONS,
     },
   },
   {
@@ -262,6 +263,7 @@ export const DEMO_COURSES: EducationCourse[] = [
         { question: 'When do registration and the course begin?', answer: 'Registration is scheduled to open on 1 November 2026, and the course is scheduled to start on 1 December 2026. Dates are interpreted in Asia/Colombo.' },
         { question: 'Does registering interest reserve a seat?', answer: 'No. Registering interest does not reserve a seat. Confirmed enrolment instructions will be shared separately.' },
       ],
+      admissions: BEGINNER_SESSION_ADMISSIONS,
     },
   },
   {
@@ -791,7 +793,9 @@ export const DEMO_COURSES: EducationCourse[] = [
       ],
       projectTitle: 'My Task and Habit Companion', projectIntroduction: 'Build a small cross-platform learning application for fictional tasks and habits using local device data.', projectTopics: [], projectFeatures: ['Home, list, detail and create-item screens', 'Clear navigation', 'Validated forms', 'Local state and persistence', 'Loading, empty and error feedback', 'Accessible labels and readable layouts', 'Test checklist and README'], scopeExclusions: ['Production deployment', 'Payments', 'Real customer data', 'Complex authentication', 'Guaranteed app-store publication'], projectPreview: { appName: 'Habit Companion', heading: 'Plan fictional tasks and habits', note: 'Educational sample application using local device data.', placeholder: 'Add a new task…', result: 'Tasks, progress states and validation feedback are managed and tested by the learner.', disclaimer: 'Illustrative preview only—not a published mobile application.' },
       included: ['Setup guide and starter project', 'Weekly learning notes and exercises', 'Guided practice and project feedback', 'Assessment checklist', 'Eligible digital completion certificate'], includedNote: 'Recordings are available to enrolled students. Tooling and access periods will be confirmed before enrolment.', assessment: [{ label: 'Weekly practical activities', weight: '30%' }, { label: 'Final practical project', weight: '50%' }, { label: 'Demonstration and explanation', weight: '20%' }], completionRequirements: ['At least five of eight live classes attended', 'Mandatory final practical assessment submitted', 'At least 60% in the final practical assessment', 'Ability to explain the project’s core functionality'], assessmentNote: 'One free assessment resubmission is available within 14 calendar days of receiving results. This course does not guarantee app-store publication or employment.', certificateLines: ['Mobile Kickstart — Beginner', '16 hours of instructor-led learning', 'Issued digitally by Techromz Institute'],
-      interestNotice: 'An enquiry does not reserve a place or confirm enrolment. The registration deadline is 27 November 2026.', faqs: [{ question: 'Do I need coding experience?', answer: 'No. This course begins with mobile development fundamentals.' }, { question: 'Which mobile framework will be used?', answer: 'The final cross-platform teaching stack and setup requirements will be confirmed before enrolment.' }, { question: 'Do I need a physical phone?', answer: 'A compatible device or emulator will be needed for testing; supported options will be included in the setup guide.' }, { question: 'Will my project be published in an app store?', answer: 'No. Publication is outside the beginner course scope.' }, { question: 'Are recordings available?', answer: 'Yes. Recordings are available to enrolled students.' }, { question: 'When is the registration deadline?', answer: 'The confirmed registration deadline is 27 November 2026. Class dates and times remain to be announced.' }, { question: 'What is required for the certificate?', answer: 'Attend at least five live classes and score at least 60% in the mandatory final practical assessment. One free resubmission is available within 14 calendar days of receiving results.' }],
+      interestNotice: 'An enquiry does not reserve a place or confirm enrolment. The registration deadline is 27 November 2026.',
+      faqs: [{ question: 'Do I need coding experience?', answer: 'No. This course begins with mobile development fundamentals.' }, { question: 'Which mobile framework will be used?', answer: 'The final cross-platform teaching stack and setup requirements will be confirmed before enrolment.' }, { question: 'Do I need a physical phone?', answer: 'A compatible device or emulator will be needed for testing; supported options will be included in the setup guide.' }, { question: 'Will my project be published in an app store?', answer: 'No. Publication is outside the beginner course scope.' }, { question: 'Are recordings available?', answer: 'Yes. Recordings are available to enrolled students.' }, { question: 'When is the registration deadline?', answer: 'The confirmed registration deadline is 27 November 2026. Class dates and times remain to be announced.' }, { question: 'What is required for the certificate?', answer: 'Attend at least five live classes and score at least 60% in the mandatory final practical assessment. One free resubmission is available within 14 calendar days of receiving results.' }],
+      admissions: BEGINNER_SESSION_ADMISSIONS,
     },
   },
   {

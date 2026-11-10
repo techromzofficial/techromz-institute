@@ -1,4 +1,4 @@
-import type { EducationCourse, EducationLevel, EducationWeeklyCourseSession } from '../contracts/course';
+import { BEGINNER_SESSION_ADMISSIONS, type EducationCourse, type EducationLevel, type EducationWeeklyCourseSession } from '../contracts/course';
 
 type Draft = {
   slug: string; title: string; subtitle: string; level: EducationLevel; proposedFee: string;
@@ -39,6 +39,7 @@ function course(draft: Draft): EducationCourse {
     detailsToConfirm: ['Academic and legal review', 'Lecturer approval', 'Intake dates and admissions', 'Public fee and payment activation'],
     plannedDetails: {
       provider: 'Techromz Institute', duration: '8 weeks', cohortCapacity: 'Maximum 30 students per intake (proposed)', prerequisites: 'Entry requirements subject to approval',
+      admissions: BEGINNER_SESSION_ADMISSIONS,
       schedule: 'One proposed 2-hour live Zoom class each week', totalLiveLearning: '16 proposed live hours', independentPractice: 'guided weekly portfolio work', finalProject: draft.project,
       certificate: 'Institute completion certificate, subject to the existing completion policy', fee: `${draft.proposedFee} proposed — not approved for payment`,
       teachingLanguage: 'Sinhala', deliveryMode: 'Live online via Zoom (proposed)', startTime: '00:00', endTime: '00:00', timeZone: 'Asia/Colombo',

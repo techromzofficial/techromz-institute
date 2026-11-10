@@ -1,4 +1,4 @@
-import type { EducationCourse, EducationLevel, EducationWeeklyCourseSession } from '../contracts/course';
+import { BEGINNER_SESSION_ADMISSIONS, type EducationCourse, type EducationLevel, type EducationWeeklyCourseSession } from '../contracts/course';
 
 type Draft = {
   slug: string; title: string; division: 'Creative Arts & Design' | 'Languages & Cultural Studies';
@@ -86,6 +86,7 @@ function course(draft: Draft): EducationCourse {
     ], outline: draft.themes.map((title) => ({ title, topics: [title] })), detailsToConfirm: ['Start date', 'Delivery schedule', 'Fee', 'Teaching team'], accent: 'indigo', demo: false, seoIndexable: false,
     image: `/images/institute/arts-languages/${image.baseName}.webp`, plannedDetails: {
       provider: 'Techromz Institute of Technology', duration: draft.duration ?? 'Duration to be confirmed', cohortCapacity: 'Class size to be confirmed', prerequisites: 'No formal prior study required',
+      admissions: BEGINNER_SESSION_ADMISSIONS,
       schedule: isBranding ? 'One 2-hour live class each week for 12 weeks' : 'Teaching schedule to be confirmed', totalLiveLearning: isBranding ? '24 hours' : 'To be confirmed', independentPractice: isBranding ? '24–36 proposed hours' : 'Guided independent practice to be confirmed',
       finalProject: draft.project, certificate: 'Completion recognition to be confirmed', teachingLanguage: 'Teaching language to be confirmed', deliveryMode: 'Delivery mode to be confirmed', startTime: '09:00', endTime: '11:00', timeZone: 'Asia/Colombo',
       heroCopy: draft.summary, heroTagline: creative ? 'Build a practical, presentation-ready creative portfolio.' : 'Learn through guided practice, communication and cultural context.', imageBaseName: `arts-languages/${image.baseName}`, imageAlt: image.alt,
