@@ -17,11 +17,13 @@ npm audit
 
 The Institute homepage is served at `/` by default. Set `INSTITUTE_ONLY_MODE=false` only when intentionally running the legacy Retail app. All Institute write features and indexing are disabled by default. Copy `.env.example` only as a reference; never commit a populated `.env` file.
 
-For UI-only local course enquiry testing without SMTP or a database, set `INSTITUTE_COURSE_ENQUIRY_LOCAL_TEST_MODE=true` in `.env.local` and run `npm run dev -- --hostname 0.0.0.0 --port 3200`. Set `INSTITUTE_DEV_ALLOWED_ORIGINS` to the computer's private IPv4 address (without a port), then restart the dev server. Open `http://<this-computer-private-ip>:3200` on this computer or another device on the same trusted private network. This mode is development-only, returns the OTP in the modal, and captures enquiries in an in-memory local outbox; it never sends email or persists enquiries. Only loopback and RFC1918 private IPv4 hosts are accepted. Keep this setting false for deployment.
+Course enquiries require the configured database, SMTP email verification and scheduled delivery worker. Public routes do not expose OTPs or a local outbox. See [course enquiry activation](docs/institute-course-enquiry-hostinger-activation.md) and [V3 ZIP deployment](docs/HOSTINGER_DEPLOYMENT_V3.md).
 
 ## Deployment and source synchronization
 
 - [Hostinger deployment](docs/HOSTINGER_DEPLOYMENT.md)
+- [Hostinger course enquiry deployment V4](docs/HOSTINGER_DEPLOYMENT_V4.md)
+- [Hostinger course enquiry deployment V5](docs/HOSTINGER_DEPLOYMENT_V5.md)
 - [Keeping this repository synchronized](docs/SOURCE_SYNCHRONIZATION.md)
 - [Institute release scope](docs/institute-release-scope.md)
 

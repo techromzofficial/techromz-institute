@@ -1,8 +1,12 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { encryptPrivateValue, privateLookupHash, secretHash } from './crypto';
 import type { CourseEnquiry, VerifiedCourseEnquiry } from './courseEnquiry';
+import { enquiryCourseContext } from './enquirySession';
 
 export class CourseEnquiryVerificationRequiredError extends Error {}
 export class CourseEnquiryIdempotencyConflictError extends Error {}
@@ -18,8 +22,25 @@ export async function isCourseEnquiryStorageReady(pool: Pick<Pool, 'execute'>): 
     await pool.execute('SELECT purpose, enquiry_session_hash FROM institute_contact_verification_challenges LIMIT 0');
     await pool.execute('SELECT purpose, enquiry_session_hash FROM institute_contact_verification_grants LIMIT 0');
     await pool.execute('SELECT contact_hash FROM institute_enquiry_otp_locks LIMIT 0');
+    if (!await areInstituteMigrationsCurrent(pool)) return false;
     return true;
   } catch { return false; }
+}
+
+async function areInstituteMigrationsCurrent(pool: Pick<Pool, 'execute'>): Promise<boolean> {
+  const directory = path.join(process.cwd(), 'database', 'migrations');
+  const files = (await readdir(directory)).filter((file) => /^\d+.*\.sql$/.test(file)).sort();
+  if (files.length === 0) return false;
+  const expected = new Map<string, string>();
+  for (const file of files) {
+    const sql = await readFile(path.join(directory, file));
+    expected.set(file, createHash('sha256').update(sql).digest('hex'));
+  }
+  const [rows] = await pool.execute<(RowDataPacket & { migration_name: string; sha256: string })[]>(
+    'SELECT migration_name, sha256 FROM institute_schema_migrations',
+  );
+  const applied = new Map(rows.map((row) => [row.migration_name, row.sha256]));
+  return [...expected].every(([name, checksum]) => applied.get(name) === checksum);
 }
 export async function recordCourseEnquiry(pool: Pick<Pool, 'getConnection'>, input: VerifiedCourseEnquiry, session?: string): Promise<StoredCourseEnquiry> {
   for (let attempt = 0; ; attempt++) {
@@ -48,7 +69,7 @@ async function recordCourseEnquiryOnce(pool: Pick<Pool, 'getConnection'>, input:
     const emailHash = privateLookupHash(input.email);
     const [grants] = await connection.execute<(RowDataPacket & { id: string; contact_lookup_hash: Buffer })[]>(`SELECT id, contact_lookup_hash FROM institute_contact_verification_grants
       WHERE grant_hash = ? AND purpose = 'course_enquiry' AND contact_type='email' AND enquiry_session_hash=?
-      AND consumed_at IS NULL AND expires_at > UTC_TIMESTAMP(6) FOR UPDATE`, [secretHash(input.verificationGrant), sessionHash]);
+      AND consumed_at IS NULL AND expires_at > UTC_TIMESTAMP(6) FOR UPDATE`, [secretHash(input.verificationGrant), secretHash(enquiryCourseContext(session, input.courseId))]);
     const grant = grants[0];
     if (!grant || !grant.contact_lookup_hash.equals(emailHash)) throw new CourseEnquiryVerificationRequiredError();
     const enquiryId = randomUUID();

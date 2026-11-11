@@ -1,18 +1,27 @@
 import 'server-only';
 import nodemailer from 'nodemailer';
 import type { ContactDelivery } from './contactVerification';
+import { readOtpPolicy } from './otpPolicy';
 import { APPROVED_SMTP_HOST, APPROVED_SMTP_PORT, hostingerSmtpTransportOptions } from './smtpRuntime.mjs';
 
 export interface InstituteSmtpConfig { host: string; port: number; user: string; password: string; from: string; secure: true; }
 export class InstituteSmtpConfigurationError extends Error {}
 
 export function readInstituteSmtpConfig(environment: NodeJS.ProcessEnv = process.env): InstituteSmtpConfig {
-  const host = environment.INSTITUTE_SMTP_HOST?.trim().toLowerCase();
-  const port = Number(environment.INSTITUTE_SMTP_PORT);
-  const user = environment.INSTITUTE_SMTP_USER?.trim().toLowerCase();
-  const password = environment.INSTITUTE_SMTP_PASSWORD;
-  const from = environment.INSTITUTE_SMTP_FROM?.trim().toLowerCase();
-  const secure = environment.INSTITUTE_SMTP_SECURE;
+  const aliases = [['SMTP_HOST', 'INSTITUTE_SMTP_HOST'], ['SMTP_PORT', 'INSTITUTE_SMTP_PORT'], ['SMTP_SECURE', 'INSTITUTE_SMTP_SECURE'], ['SMTP_USER', 'INSTITUTE_SMTP_USER'], ['SMTP_PASS', 'INSTITUTE_SMTP_PASSWORD'], ['SMTP_FROM_EMAIL', 'INSTITUTE_SMTP_FROM']];
+  for (const [primary, legacy] of aliases) {
+    if (environment[primary!] !== undefined && environment[legacy!] !== undefined && environment[primary!] !== environment[legacy!]) {
+      throw new InstituteSmtpConfigurationError('Conflicting SMTP aliases; configure one consistent naming scheme.');
+    }
+  }
+  // Standard deployment names take precedence; retain existing installations.
+  // An explicitly empty value must fail closed rather than use another credential.
+  const host = (environment.SMTP_HOST ?? environment.INSTITUTE_SMTP_HOST)?.trim().toLowerCase();
+  const port = Number(environment.SMTP_PORT ?? environment.INSTITUTE_SMTP_PORT);
+  const user = (environment.SMTP_USER ?? environment.INSTITUTE_SMTP_USER)?.trim().toLowerCase();
+  const password = environment.SMTP_PASS ?? environment.INSTITUTE_SMTP_PASSWORD;
+  const from = (environment.SMTP_FROM_EMAIL ?? environment.INSTITUTE_SMTP_FROM)?.trim().toLowerCase();
+  const secure = environment.SMTP_SECURE ?? environment.INSTITUTE_SMTP_SECURE;
   if (host !== APPROVED_SMTP_HOST || port !== APPROVED_SMTP_PORT || secure !== 'true') throw new InstituteSmtpConfigurationError('Institute SMTP must use the approved Hostinger TLS endpoint.');
   if (!user || !isEmail(user) || from !== user) throw new InstituteSmtpConfigurationError('SMTP From must match the authenticated mailbox.');
   if (!password?.trim()) throw new InstituteSmtpConfigurationError('Missing required server-only SMTP credentials.');
@@ -30,7 +39,7 @@ export function createSmtpEmailDelivery(config: InstituteSmtpConfig, createTrans
     const result = await transport.sendMail({
       from: `Techromz Institute <${config.from}>`, to: normalized,
       subject: purpose === 'course_enquiry' ? 'Verify Your Email - Techromz IT Course Enquiry' : 'Your Techromz Institute verification code',
-      text: verificationText(token), html: verificationHtml(token),
+      text: verificationText(token).replaceAll('5 minutes', `${readOtpPolicy().expiryMinutes} minutes`), html: verificationHtml(token).replaceAll('5 minutes', `${readOtpPolicy().expiryMinutes} minutes`),
       envelope: { from: config.from, to: [normalized] },
       headers: { 'X-Entity-Ref-ID': 'institute-contact-verification', 'Auto-Submitted': 'auto-generated' },
     });

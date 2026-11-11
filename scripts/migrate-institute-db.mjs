@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import mysql from 'mysql2/promise';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const mysql = require('mysql2/promise');
 
 const required = ['INSTITUTE_DB_HOST', 'INSTITUTE_DB_PORT', 'INSTITUTE_DB_NAME', 'INSTITUTE_DB_USER', 'INSTITUTE_DB_PASSWORD'];
 for (const key of required) {

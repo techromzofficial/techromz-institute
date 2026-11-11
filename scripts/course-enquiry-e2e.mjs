@@ -33,7 +33,7 @@ try {
   if (confirmation !== phrase) throw new Error('Course enquiry end-to-end test cancelled: confirmation did not match.');
   const challengeResponse = await fetch(new URL('/api/institute/contact-verification/challenge', origin), {
     method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'email', destination: RECIPIENT, purpose: 'course_enquiry' }),
+    body: JSON.stringify({ type: 'email', destination: RECIPIENT, purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }),
   });
   const challenge = await challengeResponse.json().catch(() => ({}));
   if (challengeResponse.status !== 202 || challenge.accepted !== true) throw new Error(`Verification challenge was not accepted (${challengeResponse.status}).`);
@@ -44,7 +44,7 @@ try {
   if (!/^\d{6}$/.test(token)) throw new Error('A six-digit verification code is required.');
   const verificationResponse = await fetch(new URL('/api/institute/contact-verification/verify', origin), {
     method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ challengeId: challenge.challengeId, token, purpose: 'course_enquiry' }),
+    body: JSON.stringify({ challengeId: challenge.challengeId, token, purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }),
   });
   const verification = await verificationResponse.json().catch(() => ({}));
   if (!verificationResponse.ok || verification.verified !== true) throw new Error('Contact verification failed.');

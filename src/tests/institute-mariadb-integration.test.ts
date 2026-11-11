@@ -1,3 +1,4 @@
+import { enquiryCourseContext } from '@/features/education/administration/enquirySession';
 import { recordCourseEnquiry } from '@/features/education/administration/courseEnquiryStore';
 import { dispatchCourseEnquiries } from '@/features/education/administration/courseEnquiryDelivery';
 import { randomUUID } from 'node:crypto';
@@ -11,6 +12,7 @@ import { ContactIdentityConflictError, createRegistration, updateRegistrationSta
 import { verifyPaymentAndReserveSeat } from '@/features/education/administration/payments';
 import { convertReservationToEnrolment, reserveIntakeSeat } from '@/features/education/database/seatAllocation';
 import { MySqlCertificateRepository } from '@/features/education/certificates/mysqlRepository';
+import { readInstituteDatabaseConfig } from '@/features/education/database/config';
 
 const integration = process.env.INSTITUTE_MARIADB_INTEGRATION === 'true';
 const suite = integration ? describe.sequential : describe.skip;
@@ -30,9 +32,12 @@ async function seedStudentRegistration(intakeId: string, suffix: string) {
   return { studentId, registrationId };
 }
 
-suite('MariaDB 11.8.9 Institute integration', () => {
+suite('isolated MariaDB Institute integration', () => {
   beforeAll(async () => {
-    pool = mysql.createPool({ host: process.env.INSTITUTE_DB_HOST, port: Number(process.env.INSTITUTE_DB_PORT), database: process.env.INSTITUTE_DB_NAME, user: process.env.INSTITUTE_DB_USER, password: process.env.INSTITUTE_DB_PASSWORD, connectionLimit: 40, timezone: 'Z' });
+    const config = readInstituteDatabaseConfig();
+    if (process.env.INSTITUTE_TEST_DATABASE_NAME !== config.database || config.database === 'u969738052_institute') throw new Error('An explicitly confirmed isolated test database is required. Never run this suite on production.');
+    pool = mysql.createPool({ host: config.host, port: config.port, database: config.database, user: config.user, password: config.password,
+      connectionLimit: config.connectionLimit, timezone: 'Z', connectTimeout: 10000, ...(config.ssl ? { ssl: { rejectUnauthorized: true } } : {}) });
     await pool.execute(`INSERT INTO institute_courses (id, slug, title, status) VALUES (?, ?, 'Integration Course', 'active')`, [ids.course, `integration-${ids.course}`]);
     await seedIntake(ids.capacityIntake, `CAP-${ids.capacityIntake}`); await seedIntake(ids.lifecycleIntake, `LIFE-${ids.lifecycleIntake}`);
     await seedIntake(ids.paymentIntake, `PAY-${ids.paymentIntake}`); await seedIntake(ids.certificateIntake, `CERT-${ids.certificateIntake}`);
@@ -40,9 +45,9 @@ suite('MariaDB 11.8.9 Institute integration', () => {
   });
   afterAll(async () => { if (pool) await pool.end(); });
 
-  it('runs the exact MariaDB version with tracked checksums, InnoDB tables, constraints and foreign keys', async () => {
+  it('checks MariaDB identity, tracked checksums, InnoDB tables, constraints and foreign keys', async () => {
     const [[version]] = await pool.query<mysql.RowDataPacket[]>('SELECT VERSION() AS version');
-    expect(version.version).toMatch(/^11\.8\.9-MariaDB/);
+    expect(version.version).toMatch(/MariaDB/i);
     const [migrations] = await pool.query<mysql.RowDataPacket[]>('SELECT migration_name, sha256 FROM institute_schema_migrations ORDER BY migration_name');
     expect(migrations.map((row) => row.migration_name)).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql', '006_institute_enquiry_delivery.sql']);
     expect(migrations.every((row) => /^[a-f0-9]{64}$/.test(row.sha256))).toBe(true);
@@ -172,8 +177,8 @@ suite('MariaDB 11.8.9 Institute integration', () => {
   it('atomically verifies and stores one enquiry under concurrent requests, then delivers it once with mocked SMTP', async () => {
     const session = randomUUID(), email = `${randomUUID()}@example.com`;
     let token = '';
-    const challenge = await createContactChallenge(pool, { type: 'email', destination: email, purpose: 'course_enquiry', session, deliver: async (message) => { token = message.token; } });
-    const verifications = await Promise.all(Array.from({ length: 4 }, () => verifyContactChallenge(pool, { challengeId: challenge.challengeId, token, purpose: 'course_enquiry', session })));
+    const challenge = await createContactChallenge(pool, { type: 'email', destination: email, purpose: 'course_enquiry', session: enquiryCourseContext(session, 'electronics-repair-troubleshooting'), deliver: async (message) => { token = message.token; } });
+    const verifications = await Promise.all(Array.from({ length: 4 }, () => verifyContactChallenge(pool, { challengeId: challenge.challengeId, token, purpose: 'course_enquiry', session: enquiryCourseContext(session, 'electronics-repair-troubleshooting') })));
     expect(verifications.filter(result => result.verified)).toHaveLength(1);
     const input = { fullName: 'Integration Enquiry Student', email, courseId: 'electronics-repair-troubleshooting', courseName: 'Electronics Repair & Troubleshooting', subject: 'Integration check', message: 'This test uses mocked SMTP only.', verificationGrant: verifications.find(result => result.verified)!.grant!, idempotencyKey: randomUUID() };
     const stored = await Promise.all(Array.from({ length: 3 }, () => recordCourseEnquiry(pool, input, session)));

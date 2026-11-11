@@ -23,7 +23,7 @@ export function validateCourseEnquiry(value: unknown): { valid: true; value: Ver
   if (fullName.length < 2) return { valid: false, message: 'Enter your full name.' };
   if (!isEmail(email)) return { valid: false, message: 'Enter a valid email address.' };
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(courseId)) return { valid: false, message: 'Select a valid course.' };
-  if (phone && !/^[+()\-\s0-9]{7,40}$/.test(phone)) return { valid: false, message: 'Enter a valid phone number or leave it blank.' };
+  if (phone && (!/^[+()\-\s0-9]{7,40}$/.test(phone) || !/^\d{7,15}$/.test(phone.replace(/\D/g, '')))) return { valid: false, message: 'Enter a valid phone number or leave it blank.' };
   if (message.length < 10) return { valid: false, message: 'Enter an enquiry message of at least 10 characters.' };
   if (!/^[A-Za-z0-9_-]{43}$/.test(verificationGrant)) return { valid: false, message: 'Verify your email address before sending the enquiry.' };
   if (!/^[0-9a-f-]{36}$/i.test(idempotencyKey)) return { valid: false, message: 'Refresh the form and try again.' };
@@ -39,12 +39,12 @@ export function createCourseEnquiryDelivery(
   const transport = createTransport(hostingerSmtpTransportOptions(config.password, config.user));
   return async (enquiry: CourseEnquiry, submittedAt = new Date(), enquiryId?: string) => {
     if (!isEmail(enquiry.email) || /[\r\n\x00-\x1f\x7f]/.test(enquiry.fullName + enquiry.courseName + enquiry.subject)) throw new Error('INVALID_MAIL_INPUT');
-    const subject = `New Course Enquiry - ${enquiry.courseName} - ${enquiry.fullName}`;
+    const subject = `New Course Enquiry - ${enquiry.courseName}`;
     const submittedAtDisplay = submittedAt.toLocaleString('en-LK', { dateStyle: 'medium', timeStyle: 'long', timeZone: 'Asia/Colombo' });
     const lines = ['New Student Course Enquiry', '', 'Hello Admin,', '', 'You have received a new course enquiry through your website.', '', 'Student Details:', `Full Name: ${enquiry.fullName}`, `Email Address: ${enquiry.email}`, `Phone Number: ${enquiry.phone || 'Not provided'}`, `Interested Course: ${enquiry.courseName}`, `Subject: ${enquiry.subject}`, 'Email Verification: Verified', '', 'Enquiry Message:', enquiry.message, '', `Submission Date: ${submittedAtDisplay}`, '', 'Please contact the student as soon as possible.', '', 'Best Regards,', 'Course Registration Website'];
     const result = await transport.sendMail({
       from: `Techromz Institute <${config.from}>`, to: recipient,
-      replyTo: enquiry.email, subject, text: lines.join('\n'), html: enquiryHtml(enquiry, submittedAtDisplay),
+      replyTo: enquiry.email, subject, text: [...lines, ...(enquiryId ? ['', `Enquiry reference: ${enquiryId}`] : [])].join('\n'), html: enquiryHtml(enquiry, submittedAtDisplay, enquiryId),
       ...(enquiryId ? { messageId: `<course-enquiry-${enquiryId}@techromzit.com>` } : {}),
       envelope: { from: config.from, to: [recipient] },
       headers: { 'X-Entity-Ref-ID': 'institute-course-enquiry' },
@@ -68,7 +68,7 @@ function clean(value: unknown, maximum: number) { return typeof value === 'strin
 function cleanMultiline(value: unknown, maximum: number) { return clean(value, maximum).replace(/\r\n?/g, '\n'); }
 function isEmail(value: string) { return value.length <= 254 && /^[^\s@<>,;:\"()\[\]\\\x00-\x1f\x7f]+@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/.test(value); }
 function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!); }
-function enquiryHtml(enquiry: CourseEnquiry, submittedAt: string) {
+function enquiryHtml(enquiry: CourseEnquiry, submittedAt: string, enquiryId?: string) {
   const row = (label: string, value: string) => `<tr><th align="left" style="padding:8px;border-bottom:1px solid #e2e8f0">${label}</th><td style="padding:8px;border-bottom:1px solid #e2e8f0">${escapeHtml(value)}</td></tr>`;
-  return `<!doctype html><html><body style="margin:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#0f172a"><div style="max-width:640px;margin:0 auto;padding:32px 16px"><div style="overflow:hidden;border:1px solid #dbeafe;border-radius:16px;background:#fff"><div style="padding:24px;background:#1d4ed8;color:#fff"><strong style="font-size:22px">Techromz Institute</strong></div><div style="padding:28px"><h1 style="margin-top:0;font-size:24px">New Student Course Enquiry</h1><p>Hello Admin,</p><p>You have received a new course enquiry through your website.</p><h2 style="margin-top:24px;font-size:18px">Student Details</h2><table style="width:100%;border-collapse:collapse">${row('Full Name', enquiry.fullName)}${row('Email Address', enquiry.email)}${row('Phone Number', enquiry.phone || 'Not provided')}${row('Interested Course', enquiry.courseName)}${row('Subject', enquiry.subject)}${row('Email Verification', 'Verified')}${row('Submission Date', submittedAt)}</table><h2 style="margin-top:24px;font-size:18px">Enquiry Message</h2><p style="white-space:pre-wrap;line-height:1.6">${escapeHtml(enquiry.message)}</p><p>Please contact the student as soon as possible.</p><p>Best Regards,<br />Course Registration Website</p></div></div></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#0f172a"><div style="max-width:640px;margin:0 auto;padding:32px 16px"><div style="overflow:hidden;border:1px solid #dbeafe;border-radius:16px;background:#fff"><div style="padding:24px;background:#1d4ed8;color:#fff"><strong style="font-size:22px">Techromz Institute</strong></div><div style="padding:28px"><h1 style="margin-top:0;font-size:24px">New Student Course Enquiry</h1><p>Hello Admin,</p><p>You have received a new course enquiry through your website.</p><h2 style="margin-top:24px;font-size:18px">Student Details</h2><table style="width:100%;border-collapse:collapse">${row('Full Name', enquiry.fullName)}${row('Email Address', enquiry.email)}${row('Phone Number', enquiry.phone || 'Not provided')}${row('Interested Course', enquiry.courseName)}${row('Subject', enquiry.subject)}${row('Email Verification', 'Verified')}${row('Submission Date', submittedAt)}${enquiryId ? row('Enquiry reference', enquiryId) : ''}</table><h2 style="margin-top:24px;font-size:18px">Enquiry Message</h2><p style="white-space:pre-wrap;line-height:1.6">${escapeHtml(enquiry.message)}</p><p>Please contact the student as soon as possible.</p><p>Best Regards,<br />Course Registration Website</p></div></div></div></body></html>`;
 }

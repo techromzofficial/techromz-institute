@@ -2,6 +2,7 @@ import 'server-only';
 import { randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { privateLookupHash, secretHash } from './crypto';
+import { readOtpPolicy } from './otpPolicy';
 export type ContactType = 'email' | 'phone';
 export type ContactVerificationPurpose = 'registration' | 'course_enquiry';
 export class ContactChallengeRateLimitError extends Error {
@@ -10,6 +11,7 @@ export class ContactChallengeRateLimitError extends Error {
 export type ContactDelivery = (input: { type: ContactType; destination: string; token: string; purpose?: ContactVerificationPurpose }) => Promise<void>;
 
 export async function createContactChallenge(pool: Pick<Pool, 'getConnection'>, input: { type: ContactType; destination: string; purpose?: ContactVerificationPurpose; session?: string; deliver: ContactDelivery }): Promise<{ challengeId: string }> {
+  const policy = readOtpPolicy();
   const token = String(randomInt(0, 1_000_000)).padStart(6, '0'); const challengeId = randomUUID();
   const purpose = input.purpose ?? 'registration';
   if (purpose === 'course_enquiry' && !input.session) throw new Error('ENQUIRY_SESSION_REQUIRED');
@@ -29,7 +31,7 @@ export async function createContactChallenge(pool: Pick<Pool, 'getConnection'>, 
       const [recent] = await connection.execute<(RowDataPacket & { age_seconds: number })[]>(`SELECT TIMESTAMPDIFF(SECOND, created_at, UTC_TIMESTAMP(6)) AS age_seconds
         FROM institute_contact_verification_challenges WHERE contact_type=? AND purpose=? AND contact_lookup_hash=?
         AND created_at > DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 15 MINUTE) ORDER BY created_at DESC`, [input.type, purpose, contactHash]);
-      if (recent[0] && recent[0].age_seconds < 60) throw new ContactChallengeRateLimitError(60 - recent[0].age_seconds);
+      if (recent[0] && recent[0].age_seconds < policy.resendCooldownSeconds) throw new ContactChallengeRateLimitError(policy.resendCooldownSeconds - recent[0].age_seconds);
       if (recent.length >= 4) throw new ContactChallengeRateLimitError(Math.max(1, 900 - recent[recent.length - 1]!.age_seconds));
       await connection.execute(`UPDATE institute_contact_verification_grants SET consumed_at=UTC_TIMESTAMP(6)
         WHERE purpose=? AND contact_lookup_hash=? AND enquiry_session_hash=? AND consumed_at IS NULL`, [purpose, contactHash, sessionHash]);
@@ -38,13 +40,14 @@ export async function createContactChallenge(pool: Pick<Pool, 'getConnection'>, 
       WHERE contact_type=? AND purpose=? AND contact_lookup_hash=? AND consumed_at IS NULL`, [input.type, purpose, contactHash]);
     await connection.execute(`INSERT INTO institute_contact_verification_challenges
       (id, contact_type, purpose, contact_lookup_hash, token_hash, requested_network_hash, enquiry_session_hash, expires_at)
-      VALUES (?, ?, ?, ?, ?, NULL, ?, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 5 MINUTE))`, [challengeId, input.type, purpose, contactHash, secretHash(`${challengeId}:${token}`), sessionHash]);
+      VALUES (?, ?, ?, ?, ?, NULL, ?, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MINUTE))`, [challengeId, input.type, purpose, contactHash, secretHash(`${challengeId}:${token}`), sessionHash, policy.expiryMinutes]);
     await input.deliver({ type: input.type, destination: input.destination, token, purpose });
     await connection.commit(); return { challengeId };
   } catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
 }
 
 export async function verifyContactChallenge(pool: Pick<Pool, 'getConnection'>, input: { challengeId: string; token: string; purpose?: ContactVerificationPurpose; session?: string }): Promise<{ verified: boolean; grant?: string }> {
+  const policy = readOtpPolicy();
   const purpose = input.purpose ?? 'registration';
   if (purpose === 'course_enquiry' && !input.session) throw new Error('ENQUIRY_SESSION_REQUIRED');
   const sessionHash = input.session ? secretHash(input.session) : null;
@@ -58,7 +61,7 @@ export async function verifyContactChallenge(pool: Pick<Pool, 'getConnection'>, 
       await connection.commit(); return { verified: false };
     }
     const tokenHash = secretHash(`${input.challengeId}:${input.token}`);
-    const valid = !!challenge && challenge.failed_attempts < 5 && challenge.token_hash.length === tokenHash.length && timingSafeEqual(challenge.token_hash, tokenHash);
+    const valid = !!challenge && challenge.failed_attempts < policy.maxAttempts && challenge.token_hash.length === tokenHash.length && timingSafeEqual(challenge.token_hash, tokenHash);
     if (!valid) {
       if (challenge) await connection.execute('UPDATE institute_contact_verification_challenges SET failed_attempts = failed_attempts + 1 WHERE id = ?', [input.challengeId]);
       await connection.commit(); return { verified: false };

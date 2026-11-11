@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { privateLookupHash, secretHash } from '@/features/education/administration/crypto';
 import { isCourseEnquiryStorageReady, recordCourseEnquiry } from '@/features/education/administration/courseEnquiryStore';
 
@@ -27,6 +30,7 @@ describe('secure course enquiry persistence', () => {
     expect(Buffer.isBuffer(insert.values[3])).toBe(true);
     expect(String(insert.values[3])).not.toContain(input.fullName);
     expect(statements.some(({ sql }) => sql.includes("purpose = 'course_enquiry'"))).toBe(true);
+    expect(statements.find(({ sql }) => sql.startsWith('SELECT id, contact_lookup_hash'))!.values[1]).toEqual(secretHash(`session:${input.courseId}`));
     expect(connection.commit).toHaveBeenCalledOnce();
   });
 
@@ -60,9 +64,13 @@ describe('secure course enquiry persistence', () => {
   });
 
   it('fails readiness closed until migration 006 structures are present', async () => {
-    const ready = { execute: vi.fn(async () => [[{ enquiry_table: 1, challenge_purpose: 1, grant_purpose: 1 }], []]) };
+    const files = (await readdir(path.join(process.cwd(), 'database/migrations'))).filter((file) => /^\d+.*\.sql$/.test(file)).sort();
+    const migrationRows = await Promise.all(files.map(async (migration_name) => ({ migration_name, sha256: createHash('sha256').update(await readFile(path.join(process.cwd(), 'database/migrations', migration_name))).digest('hex') })));
+    const ready = { execute: vi.fn(async (sql: string) => sql.includes('FROM institute_schema_migrations') ? [migrationRows, []] : [[{ enquiry_table: 1, challenge_purpose: 1, grant_purpose: 1 }], []]) };
+    const mismatched = { execute: vi.fn(async (sql: string) => sql.includes('FROM institute_schema_migrations') ? [[{ migration_name: files[0], sha256: '0'.repeat(64) }], []] : [[{ enquiry_table: 1, challenge_purpose: 1, grant_purpose: 1 }], []]) };
     const missing = { execute: vi.fn(async () => { throw new Error('missing column'); }) };
     await expect(isCourseEnquiryStorageReady(ready as never)).resolves.toBe(true);
+    await expect(isCourseEnquiryStorageReady(mismatched as never)).resolves.toBe(false);
     await expect(isCourseEnquiryStorageReady(missing as never)).resolves.toBe(false);
   });
 });

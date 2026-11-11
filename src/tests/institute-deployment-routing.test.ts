@@ -50,10 +50,10 @@ describe('Institute-only deployment routing', () => {
 
   it('allows only exact public enquiry and contact-verification API routes', async () => {
     const { middleware } = await loadMiddleware(true);
-    for (const path of ['/api/institute/course-enquiries', '/api/institute/contact-verification/challenge', '/api/institute/contact-verification/verify']) {
+    for (const path of ['/api/institute/course-enquiries', '/api/institute/course-enquiries/delivery', '/api/institute/contact-verification/challenge', '/api/institute/contact-verification/verify']) {
       expect(middleware(requestFor(path) as never).headers.get('x-middleware-next'), path).toBe('1');
     }
-    for (const path of ['/api/institute/course-enquiries/export', '/api/institute/contact-verification', '/api/institute/contact-verification/challenge/admin', '/api/institute/contact-verification/verify/history']) {
+    for (const path of ['/api/institute/course-enquiries/export', '/api/institute/course-enquiries/delivery/extra', '/api/institute/contact-verification', '/api/institute/contact-verification/challenge/admin', '/api/institute/contact-verification/verify/history']) {
       expect(middleware(requestFor(path) as never).status, path).toBe(404);
     }
   });

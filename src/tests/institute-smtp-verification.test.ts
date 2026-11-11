@@ -9,6 +9,19 @@ const smtpEnvironment = {
 const key = Buffer.alloc(32, 8).toString('base64');
 
 describe('Institute SMTP configuration and delivery', () => {
+  it('reads runtime SMTP deployment names and preserves fail-closed precedence', () => {
+    const environment = {
+      SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: '465', SMTP_SECURE: 'true',
+      SMTP_USER: 'mailbox@example.com', SMTP_PASS: 'mock-only-password', SMTP_FROM_EMAIL: 'mailbox@example.com',
+    } as unknown as NodeJS.ProcessEnv;
+    expect(readInstituteSmtpConfig(environment)).toMatchObject({ user: 'mailbox@example.com', from: 'mailbox@example.com', secure: true });
+    expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, ...environment })).toThrow('Conflicting SMTP aliases');
+    expect(readInstituteSmtpConfig({ ...smtpEnvironment, SMTP_PASS: 'mock-only-password' }).user).toBe('enrolments@techromzit.com');
+    expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, ...environment, SMTP_PASS: '' })).toThrow(InstituteSmtpConfigurationError);
+    expect(() => readInstituteSmtpConfig({ ...environment, SMTP_SECURE: 'false' })).toThrow(InstituteSmtpConfigurationError);
+    expect(() => readInstituteSmtpConfig({ ...environment, SMTP_FROM_EMAIL: 'other@example.com' })).toThrow(InstituteSmtpConfigurationError);
+  });
+
   it('accepts only the approved TLS endpoint and sender and fails closed without credentials', () => {
     expect(readInstituteSmtpConfig(smtpEnvironment)).toMatchObject({ host: 'smtp.hostinger.com', port: 465, user: 'enrolments@techromzit.com', from: 'enrolments@techromzit.com', secure: true });
     expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, INSTITUTE_SMTP_PASSWORD: '' })).toThrow(InstituteSmtpConfigurationError);
@@ -42,7 +55,7 @@ describe('SMTP-backed challenge lifecycle', () => {
     const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async (_sql: string, _values?: unknown[]) => [{ affectedRows: 1 }, []]) };
     await expect(createContactChallenge({ getConnection: async () => connection } as never, { type: 'email', destination: 'learner@example.com', deliver: async () => { throw new Error('SMTP unavailable'); } })).rejects.toThrow('SMTP unavailable');
     expect(connection.commit).not.toHaveBeenCalled(); expect(connection.rollback).toHaveBeenCalledOnce();
-    expect(connection.execute).toHaveBeenCalledWith(expect.stringContaining('INTERVAL 5 MINUTE'), expect.any(Array));
+    expect(connection.execute).toHaveBeenCalledWith(expect.stringContaining('INTERVAL ? MINUTE'), expect.arrayContaining([5]));
     expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_challenges'))).toBe(true);
     expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_grants'))).toBe(true);
     vi.unstubAllEnvs();

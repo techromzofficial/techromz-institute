@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCertificateRepository } from '@/features/education/certificates/server';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
-import { isAllowedSensitiveRequest } from '@/features/education/administration/requestSecurity';
+import { sensitiveRequestFailure } from '@/features/education/administration/requestSecurity';
+import { readBoundedJson } from '@/features/education/administration/http';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
 import { validateCertificateId, verifyCertificate } from '@/features/education/certificates/validation';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+function diagnostic(reason: string) {
+  // Operator-only opt-in: fixed codes, no certificate IDs, secrets or header values.
+  if (process.env.INSTITUTE_SECURITY_DIAGNOSTICS === 'true') console.error('[certificate-verification]', { reason });
+}
 
 function response(body: object, status: number, extraHeaders: Record<string, string> = {}) {
   return NextResponse.json(body, {
@@ -15,11 +22,15 @@ function response(body: object, status: number, extraHeaders: Record<string, str
 }
 
 export async function POST(request: NextRequest) {
-  if (!isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request)) return response({ outcome: 'unavailable', message: 'Certificate verification is temporarily unavailable. Please contact Techromz Institute.' }, 503);
+  const guardFailure = !isIdentifierRateLimitMode() ? 'abuse_mode_configuration' : sensitiveRequestFailure(request);
+  if (guardFailure) {
+    diagnostic(guardFailure);
+    return response({ outcome: 'unavailable', message: 'Certificate verification is temporarily unavailable. Please contact Techromz Institute.' }, 503);
+  }
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readBoundedJson(request);
   } catch {
     return response({ outcome: 'invalid', message: 'Enter a valid Techromz Institute certificate ID.' }, 400);
   }
@@ -34,10 +45,11 @@ export async function POST(request: NextRequest) {
     ]);
     const limited = limits.find((entry) => !entry.allowed);
     if (limited) return response({ outcome: 'rate_limited', message: 'Too many verification attempts. Please try again shortly.' }, 429, { 'Retry-After': String(limited.retryAfterSeconds) });
-  } catch { return response({ outcome: 'unavailable', message: 'Certificate verification is temporarily unavailable. Please contact Techromz Institute.' }, 503); }
+  } catch { diagnostic('rate_limit_storage_unavailable'); return response({ outcome: 'unavailable', message: 'Certificate verification is temporarily unavailable. Please contact Techromz Institute.' }, 503); }
 
   const repository = getCertificateRepository();
   if (!repository) {
+    diagnostic('certificate_repository_unconfigured');
     return response({ outcome: 'unavailable', message: 'Certificate verification is not yet available. Please contact Techromz Institute.' }, 503, { 'Retry-After': '3600' });
   }
 
@@ -45,6 +57,7 @@ export async function POST(request: NextRequest) {
     const result = await verifyCertificate(repository, validation.certificateId);
     return response(result, 200);
   } catch {
+    diagnostic('certificate_repository_unavailable');
     return response({ outcome: 'unavailable', message: 'Certificate verification is temporarily unavailable. Please contact Techromz Institute.' }, 503, { 'Retry-After': '300' });
   }
 }

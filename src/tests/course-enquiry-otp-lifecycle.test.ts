@@ -15,9 +15,9 @@ function database() {
         if (sql.startsWith('DELETE ') || sql.startsWith('INSERT IGNORE') || sql.startsWith('SELECT contact_hash')) return [[], []];
         if (sql.startsWith('SELECT TIMESTAMPDIFF')) return [rows.filter(r => r.purpose === values[1] && r.contact_lookup_hash.equals(values[2]) && Date.now() - r.created < 900000).reverse().map(r => ({ age_seconds: (Date.now() - r.created) / 1000 })), []];
         if (sql.startsWith('INSERT INTO institute_contact_verification_challenges')) {
-          rows.push({ id: values[0], contact_type: values[1], purpose: values[2], contact_lookup_hash: values[3], token_hash: values[4], enquiry_session_hash: values[5], created: Date.now(), consumed: false, failed_attempts: 0 });
+          rows.push({ id: values[0], contact_type: values[1], purpose: values[2], contact_lookup_hash: values[3], token_hash: values[4], enquiry_session_hash: values[5], lifetime: values[6] * 60000, created: Date.now(), consumed: false, failed_attempts: 0 });
         } else if (sql.startsWith('SELECT contact_type')) {
-          return [rows.filter(r => r.id === values[0] && r.purpose === values[1] && !r.consumed && Date.now() < r.created + 300000), []];
+          return [rows.filter(r => r.id === values[0] && r.purpose === values[1] && !r.consumed && Date.now() < r.created + r.lifetime), []];
         } else if (sql.startsWith('UPDATE institute_contact_verification_challenges SET failed_attempts')) {
           rows.find(r => r.id === values[0])!.failed_attempts++;
         } else if (sql.startsWith('UPDATE institute_contact_verification_challenges SET consumed_at')) {
@@ -83,5 +83,23 @@ describe('persistent enquiry OTP lifecycle', () => {
     const results = await Promise.all(Array.from({ length: 8 }, () => verify(db, challenge.challengeId, challenge.code)));
     expect(results.filter(result => result.verified)).toHaveLength(1);
     expect(db.grants).toHaveLength(1);
+  });
+  it('applies stricter runtime expiry, attempts and cooldown to stored challenges', async () => {
+    vi.stubEnv('OTP_EXPIRY_MINUTES', '3'); vi.stubEnv('OTP_MAX_ATTEMPTS', '2'); vi.stubEnv('OTP_RESEND_COOLDOWN_SECONDS', '90');
+    const db = database(), challenge = await issue(db);
+    expect(db.rows[0]!.lifetime).toBe(180000);
+    await expect(issue(db)).rejects.toMatchObject({ retryAfterSeconds: 90 });
+    const wrong = challenge.code === '000000' ? '111111' : '000000';
+    await verify(db, challenge.challengeId, wrong); await verify(db, challenge.challengeId, wrong);
+    expect((await verify(db, challenge.challengeId, challenge.code)).verified).toBe(false);
+    vi.advanceTimersByTime(90000); const second = await issue(db);
+    vi.advanceTimersByTime(180000);
+    expect((await verify(db, second.challengeId, second.code)).verified).toBe(false);
+  });
+  it('rejects the right code in another course context within the same browser session', async () => {
+    const db = database(); let code = '';
+    const challenge = await createContactChallenge(db.pool as never, { type: 'email', destination: 'student@example.com', purpose: 'course_enquiry', session: `${session}:course-a`, deliver: async mail => { code = mail.token; } });
+    expect((await verify(db, challenge.challengeId, code, `${session}:course-b`)).verified).toBe(false);
+    expect((await verify(db, challenge.challengeId, code, `${session}:course-a`)).verified).toBe(true);
   });
 });

@@ -19,7 +19,7 @@ describe('course enquiry delivery', () => {
     const sendMail = vi.fn(async (_message: Record<string, unknown>) => ({ accepted: [COURSE_ENQUIRY_RECIPIENT], rejected: [] }));
     const deliver = createCourseEnquiryDelivery(readInstituteSmtpConfig(smtpEnvironment), () => ({ sendMail }));
     await deliver({ fullName: 'Student Name', email: 'student@example.com', courseId: 'electronics-repair-troubleshooting', subject: 'Course details', courseName: 'AI Kickstart', message: '<Please> send details.' }, new Date('2026-11-06T10:00:00Z'));
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'enrolments@techromzit.com', replyTo: 'student@example.com', subject: 'New Course Enquiry - AI Kickstart - Student Name', envelope: { from: 'enrolments@techromzit.com', to: ['enrolments@techromzit.com'] } }));
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'enrolments@techromzit.com', replyTo: 'student@example.com', subject: 'New Course Enquiry - AI Kickstart', envelope: { from: 'enrolments@techromzit.com', to: ['enrolments@techromzit.com'] } }));
     expect(String(sendMail.mock.calls[0]![0].html)).toContain('&lt;Please&gt;');
     expect(String(sendMail.mock.calls[0]![0].html)).toContain('New Student Course Enquiry');
     expect(String(sendMail.mock.calls[0]![0].text)).toContain('Submission Date:');
@@ -34,6 +34,16 @@ describe('course enquiry delivery', () => {
   it('rejects oversized fields, header injection and unsafe reply-to addresses', () => {
     const input = { fullName: 'Student', email: 'student@example.com', courseId: 'ai-course', subject: 'Course details', message: 'Please send more details.', verificationGrant, idempotencyKey };
     for (const changed of [{ fullName: 'Student\r\nBcc: attacker@example.com' }, { subject: 'Course\r\nBcc: attacker@example.com' }, { email: 'student@example.com,attacker@example.com' }, { message: 'x'.repeat(4001) }]) expect(validateCourseEnquiry({ ...input, ...changed }).valid).toBe(false);
+  });
+
+  it('shows a neutral unavailable message and keeps verification and submission disabled when readiness fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(Response.json({ available: false })));
+    render(<CourseEnquiryButton courseId="electronics-repair-troubleshooting" courseName="Electronics Repair & Troubleshooting" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Email enquiry' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email enquiries are temporarily unavailable. Please try again later.');
+    expect(screen.getByRole('button', { name: 'Verify Email' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send enquiry' })).toBeDisabled();
+    vi.unstubAllGlobals();
   });
 
   it('opens an accessible form with the selected course and preserves values on failure', async () => {

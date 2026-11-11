@@ -11,7 +11,7 @@ vi.mock('@/features/education/database/pool', () => ({ getInstituteDatabasePool:
 import { POST } from '@/app/api/institute/contact-verification/challenge/route';
 
 function request(destination = 'learner@example.com', type = 'email', purpose = 'course_enquiry') {
-  return new NextRequest('https://techromzit.com/api/institute/contact-verification/challenge', { method: 'POST', headers: { 'content-type': 'application/json', host: 'techromzit.com', origin: 'https://techromzit.com' }, body: JSON.stringify({ type, destination, purpose }) });
+  return new NextRequest('https://techromzit.com/api/institute/contact-verification/challenge', { method: 'POST', headers: { 'content-type': 'application/json', host: 'techromzit.com', origin: 'https://techromzit.com' }, body: JSON.stringify({ type, destination, purpose, courseId: 'electronics-repair-troubleshooting' }) });
 }
 
 describe('contact verification challenge API', () => {
@@ -24,7 +24,7 @@ describe('contact verification challenge API', () => {
 
   it('uses global, resend, destination and conservative mailbox limits before neutral acceptance', async () => {
     const response = await POST(request());
-    expect(response.status).toBe(202); expect(await response.json()).toEqual({ accepted: true, challengeId: '8fa27d53-a458-4fba-a295-7103d610f635', resendAfterSeconds: 60 });
+    expect(response.status).toBe(202); expect(await response.json()).toEqual({ accepted: true, challengeId: '8fa27d53-a458-4fba-a295-7103d610f635', resendAfterSeconds: 60, expiresInMinutes: 5 });
     expect(response.headers.get('set-cookie')).toContain('HttpOnly');
     expect(consumeSharedRateLimit).toHaveBeenCalledTimes(4);
     expect(createContactChallenge).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ purpose: 'course_enquiry' }));

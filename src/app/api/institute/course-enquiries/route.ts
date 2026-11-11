@@ -5,28 +5,42 @@ import { CourseEnquiryVerificationRequiredError, CourseEnquiryIdempotencyConflic
 import { isInstituteFeatureEnabled } from '@/features/education/administration/config';
 import { adminJson, readBoundedJson } from '@/features/education/administration/http';
 import { consumeSharedRateLimit, isIdentifierRateLimitMode } from '@/features/education/administration/rateLimit';
-import { isAllowedSensitiveRequest, trustedClientIp } from '@/features/education/administration/requestSecurity';
+import { isAllowedHostsConfigurationReady, isAllowedSensitiveRequest, isTrustedClientIpHeaderConfigured, trustedClientIp } from '@/features/education/administration/requestSecurity';
 import { getInstituteDatabasePool } from '@/features/education/database/pool';
 import { educationCourseService } from '@/features/education/services/courseService';
+import { isInstituteSecurityKeyConfigurationReady } from '@/features/education/administration/crypto';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+const unavailableMessage = 'Email enquiries are temporarily unavailable. Please try again later.';
 
 export async function GET() {
   if (!isInstituteFeatureEnabled('courseEnquiry')) return adminJson({ available: false });
   const smtpReady = Boolean(getCourseEnquiryDelivery());
   const abuseProtectionReady = isIdentifierRateLimitMode();
+  const securityKeysReady = isInstituteSecurityKeyConfigurationReady();
+  const allowedHostsReady = isAllowedHostsConfigurationReady();
   let databaseReady = false;
-  try { databaseReady = abuseProtectionReady && await isCourseEnquiryStorageReady(getInstituteDatabasePool()); } catch { /* fail closed */ }
+  try { databaseReady = abuseProtectionReady && securityKeysReady && await isCourseEnquiryStorageReady(getInstituteDatabasePool()); } catch { /* fail closed */ }
   const workerReady = (process.env.INSTITUTE_ENQUIRY_WORKER_SECRET?.length ?? 0) >= 32;
-  const ipReady = process.env.NODE_ENV !== 'production' || Boolean(process.env.INSTITUTE_TRUSTED_CLIENT_IP_HEADER?.trim());
-  return adminJson({ available: smtpReady && abuseProtectionReady && databaseReady && workerReady && ipReady });
+  const ipReady = process.env.NODE_ENV !== 'production' || isTrustedClientIpHeaderConfigured();
+  const available = smtpReady && abuseProtectionReady && securityKeysReady && allowedHostsReady && databaseReady && workerReady && ipReady;
+  if (!available) {
+    // Keep the public response deliberately opaque while making deployment diagnosis possible.
+    console.error('[course-enquiry] readiness checks failed', {
+      smtpConfiguration: smtpReady, abuseProtection: abuseProtectionReady, securityKeys: securityKeysReady,
+      allowedHosts: allowedHostsReady, databaseAndMigrations: databaseReady, workerSecretConfigured: workerReady,
+      trustedClientIpHeaderConfigured: ipReady,
+    });
+  }
+  return adminJson({ available });
 }
 
 export async function POST(request: NextRequest) {
 
-  if (!isInstituteFeatureEnabled('courseEnquiry')) return adminJson({ message: 'Direct email submission is not configured on this server. Please use WhatsApp or try again later.' }, 503);
+  if (!isInstituteFeatureEnabled('courseEnquiry')) return adminJson({ message: unavailableMessage }, 503);
   const deliver = getCourseEnquiryDelivery();
-  if ((process.env.INSTITUTE_ENQUIRY_WORKER_SECRET?.length ?? 0) < 32 || !deliver || !isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request)) return adminJson({ message: 'Direct email submission is not configured on this server. Please use WhatsApp or try again later.' }, 503);
+  if ((process.env.INSTITUTE_ENQUIRY_WORKER_SECRET?.length ?? 0) < 32 || !deliver || !isIdentifierRateLimitMode() || !isAllowedSensitiveRequest(request)) return adminJson({ message: unavailableMessage }, 503);
   let body: unknown;
   try { body = await readBoundedJson(request); } catch { return adminJson({ message: 'Invalid enquiry request.' }, 400); }
   const validation = validateCourseEnquiry(body);

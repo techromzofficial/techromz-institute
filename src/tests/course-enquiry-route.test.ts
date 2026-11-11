@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  deliver: vi.fn(), record: vi.fn(), mark: vi.fn(), rateLimit: vi.fn(), storageReady: vi.fn(),
+  deliver: vi.fn(), record: vi.fn(), mark: vi.fn(), rateLimit: vi.fn(), storageReady: vi.fn(), featureEnabled: true,
 }));
-vi.mock('@/features/education/administration/config', () => ({ isInstituteFeatureEnabled: () => true }));
+vi.mock('@/features/education/administration/config', () => ({ isInstituteFeatureEnabled: () => mocks.featureEnabled }));
 vi.mock('@/features/education/administration/courseEnquiry', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/features/education/administration/courseEnquiry')>()), getCourseEnquiryDelivery: () => mocks.deliver }));
 vi.mock('@/features/education/administration/courseEnquiryStore', () => ({ CourseEnquiryVerificationRequiredError: class extends Error {}, CourseEnquiryIdempotencyConflictError: class extends Error {}, recordCourseEnquiry: mocks.record, markCourseEnquiryNotification: mocks.mark, isCourseEnquiryStorageReady: mocks.storageReady }));
 vi.mock('@/features/education/administration/rateLimit', () => ({ isIdentifierRateLimitMode: () => true, consumeSharedRateLimit: mocks.rateLimit }));
-vi.mock('@/features/education/administration/requestSecurity', () => ({ isAllowedSensitiveRequest: () => true, trustedClientIp: () => null }));
+vi.mock('@/features/education/administration/requestSecurity', () => ({ isAllowedSensitiveRequest: () => true, trustedClientIp: () => null, isAllowedHostsConfigurationReady: () => true, isTrustedClientIpHeaderConfigured: () => true }));
 vi.mock('@/features/education/database/pool', () => ({ getInstituteDatabasePool: () => ({ pool: true }) }));
 
 const input = { fullName: 'Test Student', email: 'student@example.com', phone: '+94 77 123 4567', courseId: 'electronics-repair-troubleshooting', subject: 'Course details', courseName: 'Electronics Repair & Troubleshooting', message: 'Please send the course details.', verificationGrant: 'G'.repeat(43), idempotencyKey: '2ed25e4a-37c7-4a65-8ad6-4debdff178f6' };
@@ -16,6 +16,7 @@ const input = { fullName: 'Test Student', email: 'student@example.com', phone: '
 describe('course enquiry API orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.featureEnabled = true;
     mocks.rateLimit.mockResolvedValue({ allowed: true, retryAfterSeconds: 0 });
     mocks.storageReady.mockResolvedValue(false);
     mocks.record.mockResolvedValue({ enquiryId: 'enquiry-id', duplicate: false, notificationStatus: 'pending', enquiry: input });
@@ -28,6 +29,16 @@ describe('course enquiry API orchestration', () => {
     const { GET } = await import('@/app/api/institute/course-enquiries/route');
     const response = await GET();
     expect(await response.json()).toEqual({ available: false });
+  });
+
+  it('returns the safe unavailable message and does not process submissions while the feature flag is off', async () => {
+    mocks.featureEnabled = false;
+    const { POST } = await import('@/app/api/institute/course-enquiries/route');
+    const request = new NextRequest('https://techromzit.com/api/institute/course-enquiries', { method: 'POST', headers: { 'content-type': 'application/json', host: 'techromzit.com', origin: 'https://techromzit.com' }, body: JSON.stringify(input) });
+    const response = await POST(request);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ message: 'Email enquiries are temporarily unavailable. Please try again later.' });
+    expect(mocks.record).not.toHaveBeenCalled();
   });
 
   it('records and queues the enquiry without sending in the request', async () => {

@@ -72,7 +72,7 @@ describe('IP-independent Hostinger abuse protection', () => {
   });
 
   it('layers destination, mailbox and global challenge limits independently of forged IPs', async () => {
-    await challenge(post('/api/institute/contact-verification/challenge', { type: 'email', destination: 'Learner@example.com', purpose: 'course_enquiry' }));
+    await challenge(post('/api/institute/contact-verification/challenge', { type: 'email', destination: 'Learner@example.com', purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }));
     expect(limiterCalls()).toEqual([
       ['global', 'contact.challenge.global'], ['learner@example.com', 'contact.challenge.cooldown'],
       ['learner@example.com', 'contact.challenge.destination24h'], ['enrolments-mailbox', 'contact.challenge.mailbox24h'],
@@ -81,7 +81,7 @@ describe('IP-independent Hostinger abuse protection', () => {
 
   it('uses challenge and account identifiers plus shared global limits', async () => {
     const challengeId = '8fa27d53-a458-4fba-a295-7103d610f635';
-    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry' }, { ...standardHeaders, cookie: `institute_enquiry_session=${'S'.repeat(43)}` }));
+    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }, { ...standardHeaders, cookie: `institute_enquiry_session=${'S'.repeat(43)}` }));
     await login(post('/api/institute/admin/auth/login', { username: 'admin.user', password: 'not-a-real-password' }));
     expect(limiterCalls()).toEqual([
       ['global', 'contact.verify.global'], [challengeId, 'contact.verify.challenge'],

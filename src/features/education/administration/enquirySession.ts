@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import type { NextRequest, NextResponse } from 'next/server';
 
 const COOKIE = 'institute_enquiry_session';
+export function enquiryCourseContext(session: string, courseId: string): string {
+  return `${session}:${courseId}`;
+}
 export function readEnquirySession(request: NextRequest): string | undefined {
   const value = request.cookies.get(COOKIE)?.value;
   return value && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : undefined;

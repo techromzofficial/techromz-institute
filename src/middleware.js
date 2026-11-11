@@ -70,6 +70,7 @@ function isInstituteResource(pathname) {
 function isInstitutePublicApi(pathname) {
   return pathname === '/api/institute/certificates/verify' ||
     pathname === '/api/institute/course-enquiries' ||
+    pathname === '/api/institute/course-enquiries/delivery' ||
     pathname === '/api/institute/course-enquiries/local-outbox' ||
     pathname === '/api/institute/contact-verification/challenge' ||
     pathname === '/api/institute/contact-verification/verify' ||
