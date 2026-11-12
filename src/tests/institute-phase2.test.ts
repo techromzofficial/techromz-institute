@@ -123,10 +123,10 @@ describe('seat reservation lifecycle', () => {
 });
 
 describe('MariaDB migration safety', () => {
-  it('tracks four InnoDB migrations with no production people, certificates or PostgreSQL syntax', () => {
+  it('tracks six InnoDB migrations with no production people, certificates or PostgreSQL syntax', () => {
     const directory = path.join(process.cwd(), 'database/migrations');
     const files = fs.readdirSync(directory).filter((file) => file.endsWith('.sql')).sort();
-    expect(files).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql']);
+    expect(files).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql', '006_institute_enquiry_delivery.sql']);
     const sql = files.map((file) => fs.readFileSync(path.join(directory, file), 'utf8')).join('\n');
     expect(sql).not.toMatch(/\bSERIAL\b|::json|TIMESTAMPTZ|ON CONFLICT/i);
     expect(sql).not.toMatch(/INSERT INTO institute_(students|certificates|admin_users)/i);
@@ -137,6 +137,6 @@ describe('MariaDB migration safety', () => {
   it('uses an advisory lock, checksums and retry-safe CREATE IF NOT EXISTS DDL for partial failures', () => {
     const runner = fs.readFileSync(path.join(process.cwd(), 'scripts/migrate-institute-db.mjs'), 'utf8');
     expect(runner).toContain("GET_LOCK('techromz_institute_migrations'"); expect(runner).toContain('sha256'); expect(runner).toContain('Applied migration was modified');
-    for (const file of ['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql']) expect(fs.readFileSync(path.join(process.cwd(), 'database/migrations', file), 'utf8')).not.toMatch(/CREATE TABLE (?!IF NOT EXISTS)/);
+    for (const file of ['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql', '006_institute_enquiry_delivery.sql']) expect(fs.readFileSync(path.join(process.cwd(), 'database/migrations', file), 'utf8')).not.toMatch(/CREATE TABLE (?!IF NOT EXISTS)/);
   });
 });

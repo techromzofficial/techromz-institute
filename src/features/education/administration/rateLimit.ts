@@ -4,8 +4,12 @@ import { secretHash } from './crypto';
 
 export interface RateLimitPolicy { scope: string; maximum: number; windowSeconds: number; }
 
+function validatePolicy(subject: string, policy: RateLimitPolicy) {
+  if (!subject || !policy.scope || !Number.isSafeInteger(policy.maximum) || policy.maximum < 1 || !Number.isSafeInteger(policy.windowSeconds) || policy.windowSeconds < 1) throw new Error('INVALID_RATE_LIMIT_CONFIGURATION');
+}
+
 export async function consumeSharedRateLimit(pool: Pick<Pool, 'getConnection'>, subject: string, policy: RateLimitPolicy): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
-  if (!subject || policy.maximum < 1 || policy.windowSeconds < 1) throw new Error('INVALID_RATE_LIMIT_CONFIGURATION');
+  validatePolicy(subject, policy);
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
@@ -16,7 +20,7 @@ export async function consumeSharedRateLimit(pool: Pick<Pool, 'getConnection'>, 
 }
 
 export async function consumeSharedRateLimitConnection(connection: Pick<PoolConnection, 'execute'>, subject: string, policy: RateLimitPolicy): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
-  if (!subject || policy.maximum < 1 || policy.windowSeconds < 1) throw new Error('INVALID_RATE_LIMIT_CONFIGURATION');
+  validatePolicy(subject, policy);
   const subjectHash = secretHash(`${policy.scope}:${subject}`);
   await connection.execute(`INSERT INTO institute_rate_limits (scope, subject_hash, window_started_at, attempt_count, expires_at)
       VALUES (?, ?, UTC_TIMESTAMP(6), 1, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? SECOND))
@@ -29,9 +33,11 @@ export async function consumeSharedRateLimitConnection(connection: Pick<PoolConn
       FROM institute_rate_limits WHERE scope = ? AND subject_hash = ? FOR UPDATE`, [policy.scope, subjectHash]);
   const current = rows[0];
   if (!current) throw new Error('RATE_LIMIT_STATE_UNAVAILABLE');
-  return Number(current.attempt_count) <= policy.maximum
+  const attempts = Number(current.attempt_count), retryAfter = Number(current.retry_after);
+  if (!Number.isSafeInteger(attempts) || attempts < 1 || !Number.isSafeInteger(retryAfter) || retryAfter < 1) throw new Error('RATE_LIMIT_STATE_UNAVAILABLE');
+  return attempts <= policy.maximum
     ? { allowed: true, retryAfterSeconds: 0 }
-    : { allowed: false, retryAfterSeconds: Number(current.retry_after) };
+    : { allowed: false, retryAfterSeconds: retryAfter };
 }
 
 export function isIdentifierRateLimitMode(environment: NodeJS.ProcessEnv = process.env): boolean {

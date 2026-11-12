@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import mysql from 'mysql2/promise';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const mysql = require('mysql2/promise');
 import { readDatabaseConfig } from './institute-provisioning-common.mjs';
 
 const connection = await mysql.createConnection(readDatabaseConfig(process.env));

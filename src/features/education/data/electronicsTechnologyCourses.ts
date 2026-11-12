@@ -1,4 +1,4 @@
-import type { EducationCourse, EducationLevel } from '../contracts/course';
+import { BEGINNER_SESSION_ADMISSIONS, type EducationCourse, type EducationLevel } from '../contracts/course';
 
 type Draft = { slug: string; title: string; level: EducationLevel; fee: string; description: string; curriculum: string[]; outcomes: string[]; assessment: string };
 
@@ -27,6 +27,7 @@ function createCourse(draft: Draft): EducationCourse {
     keywords: ['electronics', 'circuits', 'multimeter', 'soldering', 'troubleshooting', 'January 2027'],
     plannedDetails: {
       provider: 'Techromz Institute of Technology', duration: '8 weeks', cohortCapacity: 'Maximum 30 students',
+      admissions: { ...BEGINNER_SESSION_ADMISSIONS, capacityNotice: BEGINNER_SESSION_ADMISSIONS.capacityNotice!.replace('Maximum 20', 'Maximum 30') },
       prerequisites: draft.level === 'Beginner' ? 'No prior electronics experience required' : 'Basic electronics and circuit-building knowledge recommended',
       schedule: 'One 2-hour live Zoom session weekly; exact day and time to be confirmed', totalLiveLearning: '16 hours',
       independentPractice: 'Guided low-voltage practical work between sessions', finalProject: draft.assessment,

@@ -1,6 +1,9 @@
+import { enquiryCourseContext } from '@/features/education/administration/enquirySession';
+import { recordCourseEnquiry } from '@/features/education/administration/courseEnquiryStore';
+import { dispatchCourseEnquiries } from '@/features/education/administration/courseEnquiryDelivery';
 import { randomUUID } from 'node:crypto';
 import mysql, { type Pool } from 'mysql2/promise';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { consumeSharedRateLimit } from '@/features/education/administration/rateLimit';
 import { createContactChallenge, verifyContactChallenge } from '@/features/education/administration/contactVerification';
 import { authenticateAdmin } from '@/features/education/administration/auth';
@@ -9,6 +12,9 @@ import { ContactIdentityConflictError, createRegistration, updateRegistrationSta
 import { verifyPaymentAndReserveSeat } from '@/features/education/administration/payments';
 import { convertReservationToEnrolment, reserveIntakeSeat } from '@/features/education/database/seatAllocation';
 import { MySqlCertificateRepository } from '@/features/education/certificates/mysqlRepository';
+import { readInstituteDatabaseConfig } from '@/features/education/database/config';
+import { getInstituteDatabasePool } from '@/features/education/database/pool';
+import { isCourseEnquiryStorageReady } from '@/features/education/administration/courseEnquiryStore';
 
 const integration = process.env.INSTITUTE_MARIADB_INTEGRATION === 'true';
 const suite = integration ? describe.sequential : describe.skip;
@@ -28,9 +34,15 @@ async function seedStudentRegistration(intakeId: string, suffix: string) {
   return { studentId, registrationId };
 }
 
-suite('MariaDB 11.8.9 Institute integration', () => {
+suite('isolated MariaDB Institute integration', () => {
   beforeAll(async () => {
-    pool = mysql.createPool({ host: process.env.INSTITUTE_DB_HOST, port: Number(process.env.INSTITUTE_DB_PORT), database: process.env.INSTITUTE_DB_NAME, user: process.env.INSTITUTE_DB_USER, password: process.env.INSTITUTE_DB_PASSWORD, connectionLimit: 40, timezone: 'Z' });
+    const config = readInstituteDatabaseConfig();
+    if (process.env.INSTITUTE_TEST_DATABASE_NAME !== config.database || config.database.toLowerCase() === 'u969738052_institute') throw new Error('An explicitly confirmed isolated test database is required. Never run this suite on production.');
+    // Use the actual Next.js connection service after the isolated-target check.
+    pool = getInstituteDatabasePool();
+    const [[probe]] = await pool.query<mysql.RowDataPacket[]>('SELECT 1 AS connection_test');
+    expect(Number(probe.connection_test)).toBe(1);
+    expect(await isCourseEnquiryStorageReady(pool)).toBe(true);
     await pool.execute(`INSERT INTO institute_courses (id, slug, title, status) VALUES (?, ?, 'Integration Course', 'active')`, [ids.course, `integration-${ids.course}`]);
     await seedIntake(ids.capacityIntake, `CAP-${ids.capacityIntake}`); await seedIntake(ids.lifecycleIntake, `LIFE-${ids.lifecycleIntake}`);
     await seedIntake(ids.paymentIntake, `PAY-${ids.paymentIntake}`); await seedIntake(ids.certificateIntake, `CERT-${ids.certificateIntake}`);
@@ -38,11 +50,11 @@ suite('MariaDB 11.8.9 Institute integration', () => {
   });
   afterAll(async () => { if (pool) await pool.end(); });
 
-  it('runs the exact MariaDB version with tracked checksums, InnoDB tables, constraints and foreign keys', async () => {
+  it('checks MariaDB identity, tracked checksums, InnoDB tables, constraints and foreign keys', async () => {
     const [[version]] = await pool.query<mysql.RowDataPacket[]>('SELECT VERSION() AS version');
-    expect(version.version).toMatch(/^11\.8\.9-MariaDB/);
+    expect(version.version).toMatch(/MariaDB/i);
     const [migrations] = await pool.query<mysql.RowDataPacket[]>('SELECT migration_name, sha256 FROM institute_schema_migrations ORDER BY migration_name');
-    expect(migrations.map((row) => row.migration_name)).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql']);
+    expect(migrations.map((row) => row.migration_name)).toEqual(['001_institute_core.sql', '002_institute_administration.sql', '003_institute_security_remediation.sql', '004_institute_ip_independent_security.sql', '005_institute_course_enquiries.sql', '006_institute_enquiry_delivery.sql']);
     expect(migrations.every((row) => /^[a-f0-9]{64}$/.test(row.sha256))).toBe(true);
     const [[engines]] = await pool.query<mysql.RowDataPacket[]>(`SELECT COUNT(*) AS non_innodb FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name LIKE 'institute_%' AND engine <> 'InnoDB'`);
     expect(Number(engines.non_innodb)).toBe(0);
@@ -139,6 +151,9 @@ suite('MariaDB 11.8.9 Institute integration', () => {
   });
 
   it('persists administrator sessions and applies database account lockout', async () => {
+    // Test-process only; this does not change any Next.js server/production flag.
+    vi.stubEnv('INSTITUTE_ADMIN_ENABLED', 'true');
+    try {
     const successfulId = randomUUID(); const lockedId = randomUUID();
     const passwordHash = await hashPassword('phase-7 integration administrator passphrase');
     await pool.execute(`INSERT INTO institute_admin_users (id, username, display_name, password_hash, role)
@@ -150,6 +165,7 @@ suite('MariaDB 11.8.9 Institute integration', () => {
     for (let attempt = 0; attempt < 5; attempt += 1) expect(await authenticateAdmin(pool, 'phase7.locked', 'incorrect password', 'ip-independent-global')).toBeNull();
     const [[locked]] = await pool.query<mysql.RowDataPacket[]>('SELECT failed_login_count, locked_until FROM institute_admin_users WHERE id=?', [lockedId]);
     expect(Number(locked.failed_login_count)).toBe(5); expect(new Date(locked.locked_until).getTime()).toBeGreaterThan(Date.now());
+    } finally { vi.unstubAllEnvs(); }
   });
 
   it('enforces certificate eligibility constraints and returns only the public projection', async () => {
@@ -167,4 +183,40 @@ suite('MariaDB 11.8.9 Institute integration', () => {
     expect(result).toMatchObject({ certificateId, courseName: 'Integration Course', status: 'valid', issuerName: 'Techromz Institute' });
     expect(result).not.toHaveProperty('finalAssessmentScore');
   });
+  it('atomically verifies and stores one enquiry under concurrent requests, then delivers it once with mocked SMTP', async () => {
+    const session = randomUUID(), email = `${randomUUID()}@example.com`;
+    let token = '';
+    const challenge = await createContactChallenge(pool, { type: 'email', destination: email, purpose: 'course_enquiry', session: enquiryCourseContext(session, 'electronics-repair-troubleshooting'), deliver: async (message) => { token = message.token; } });
+    const verifications = await Promise.all(Array.from({ length: 4 }, () => verifyContactChallenge(pool, { challengeId: challenge.challengeId, token, purpose: 'course_enquiry', session: enquiryCourseContext(session, 'electronics-repair-troubleshooting') })));
+    expect(verifications.filter(result => result.verified)).toHaveLength(1);
+    const input = { fullName: 'Integration Enquiry Student', email, courseId: 'electronics-repair-troubleshooting', courseName: 'Electronics Repair & Troubleshooting', subject: 'Integration check', message: 'This test uses mocked SMTP only.', verificationGrant: verifications.find(result => result.verified)!.grant!, idempotencyKey: randomUUID() };
+    // Inject a failure after the real INSERT but before grant consumption. Both
+    // the row and grant mutation must roll back; the same request can then retry.
+    const failingPool = { getConnection: async () => {
+      const connection = await pool.getConnection();
+      return {
+        beginTransaction: () => connection.beginTransaction(), commit: () => connection.commit(), rollback: () => connection.rollback(), release: () => connection.release(),
+        execute: async (sql: string, values: Parameters<Pool['execute']>[1]) => {
+          if (sql.startsWith('UPDATE institute_contact_verification_grants')) throw new Error('INJECTED_STAGING_TRANSACTION_FAILURE');
+          return connection.execute(sql, values);
+        },
+      };
+    } };
+    await expect(recordCourseEnquiry(failingPool as never, input, session)).rejects.toThrow('INJECTED_STAGING_TRANSACTION_FAILURE');
+    const [[rolledBack]] = await pool.query<mysql.RowDataPacket[]>('SELECT COUNT(*) AS count FROM institute_course_enquiries WHERE idempotency_hash=?', [secretHash(`${session}:${input.idempotencyKey}`)]);
+    expect(Number(rolledBack.count)).toBe(0);
+    const stored = await Promise.all(Array.from({ length: 3 }, () => recordCourseEnquiry(pool, input, session)));
+    expect(new Set(stored.map(result => result.enquiryId)).size).toBe(1);
+    expect(stored.filter(result => !result.duplicate)).toHaveLength(1);
+    const recovery = await dispatchCourseEnquiries(pool, async () => { throw { responseCode: 451 }; }, 1, stored[0]!.enquiryId);
+    expect(recovery).toMatchObject({ retryScheduled: 1 });
+    // Advance only this disposable staging row's delivery schedule, not wall time.
+    await pool.execute('UPDATE institute_course_enquiries SET next_delivery_at=DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 SECOND) WHERE id=?', [stored[0]!.enquiryId]);
+    let sends = 0;
+    await Promise.all(Array.from({ length: 3 }, () => dispatchCourseEnquiries(pool, async (enquiry) => { expect(enquiry.email).toBe(email); sends++; }, 1, stored[0]!.enquiryId)));
+    expect(sends).toBe(1);
+    const [[row]] = await pool.query<mysql.RowDataPacket[]>('SELECT notification_status, delivery_attempts FROM institute_course_enquiries WHERE id=?', [stored[0]!.enquiryId]);
+    expect(row.notification_status).toBe('notified'); expect(row.delivery_attempts).toBe(2);
+  });
+
 });

@@ -7,6 +7,13 @@ export function validateDiagnosticRecipient(value) {
   return recipient;
 }
 
+// Shared non-echoed input for controlled CLI tests. Never print the returned bytes.
+export async function readHiddenTerminalValue(input, output, prompt) {
+  if (!input?.isTTY || !output?.isTTY || typeof input.setRawMode !== 'function') throw new Error('Interactive TTY required.');
+  const terminal = new SequentialTerminalInput(input, output);
+  try { return await terminal.readHidden(prompt); } finally { terminal.close(); }
+}
+
 export async function sendInstituteSmtpDiagnostic({ recipient, password, createTransport = nodemailer.createTransport }) {
   const approvedRecipient = validateDiagnosticRecipient(recipient);
   const transport = createTransport(hostingerSmtpTransportOptions(password));

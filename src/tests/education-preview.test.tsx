@@ -5,8 +5,25 @@ import { DEMO_COURSES } from '@/features/education/data/demoCourses';
 import { educationCourseService } from '@/features/education/services/courseService';
 import EnquiryUnavailable from '@/features/education/components/EnquiryUnavailable';
 import { formatInstituteDate, getInstituteContactLinks } from '@/features/education/config/contact';
+import initialIntakes from '../../config/institute-initial-intakes.json';
+import { INSTITUTE_DEPARTMENTS } from '@/features/education/data/instituteContent';
 
 describe('Education preview catalogue', () => {
+  it('keeps every public IT capacity and schedule consistent with provisioning', async () => {
+    const department = INSTITUTE_DEPARTMENTS.find(({ slug }) => slug === 'information-technology')!;
+    const courses = (await educationCourseService.listCourses()).filter((course) => department.courseSlugs.includes(course.slug));
+    expect(courses.map(({ title }) => title)).toEqual(['AI Kickstart', 'Retail Kickstart', 'AI Knowledge Lab', 'Retail Developer Lab', 'AI Launchpad', 'Retail Launchpad', 'Mobile Kickstart', 'Mobile Developer Lab', 'Mobile Launchpad']);
+    for (const course of courses) {
+      expect(course.plannedDetails).toMatchObject({ cohortCapacity: 'Maximum 30 students per course', timeZone: 'Asia/Colombo' });
+      if (course.plannedDetails?.courseStarts) {
+        const retail = course.subject === 'Retail Eco System / Retail Software Development';
+        expect(course.plannedDetails).toMatchObject({ startTime: retail ? '20:00' : '18:00', endTime: retail ? '22:00' : '20:00' });
+      }
+      expect(course.plannedDetails?.admissions?.capacityNotice ?? course.plannedDetails?.cohortCapacity).toMatch(/Maximum 30 students per course/);
+      expect(initialIntakes.courses.find(({ slug }) => slug === course.slug)?.startsAt).toBe(course.plannedDetails?.courseStarts ?? null);
+      expect(course.plannedDetails?.faqs.map(({ answer }) => answer).join(' ')).not.toMatch(/5:30 PM|7:30 PM/);
+    }
+  });
   it('filters by keyword, subject and level', () => {
     render(<CourseCatalogue courses={DEMO_COURSES} />);
     fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'responsible' } });
@@ -73,12 +90,12 @@ describe('Education preview catalogue', () => {
       registration: course.plannedDetails?.registrationOpens,
       timeZone: course.plannedDetails?.timeZone,
     }))).toEqual([
-      { title: 'AI Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'AI Knowledge Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Developer Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'AI Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'AI Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T18:00:00+05:30', time: '18:00-20:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'Retail Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T20:00:00+05:30', time: '20:00-22:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'AI Knowledge Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T18:00:00+05:30', time: '18:00-20:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'Retail Developer Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T20:00:00+05:30', time: '20:00-22:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'AI Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T18:00:00+05:30', time: '18:00-20:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'Retail Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T20:00:00+05:30', time: '20:00-22:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
     ]);
   });
 
@@ -138,7 +155,7 @@ describe('Education preview catalogue', () => {
     const title = 'Arduino for Beginners Bundle';
     const links = getInstituteContactLinks(title);
     expect(links.whatsapp).toBe('https://wa.me/94773663604?text=Hello%20Techromz%20Institute%2C%20I%20am%20interested%20in%20the%20Arduino%20for%20Beginners%20Bundle.');
-    render(<EnquiryUnavailable courseTitle={title} />);
+    render(<EnquiryUnavailable courseId="arduino-for-beginners-bundle" courseTitle={title} />);
     expect(screen.getByRole('heading', { name: 'Express interest' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', links.whatsapp);
     expect(screen.getByRole('button', { name: /Email enquiry/ })).toBeInTheDocument();

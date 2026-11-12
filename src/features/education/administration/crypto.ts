@@ -12,6 +12,23 @@ function keyFrom(environment: NodeJS.ProcessEnv, name: string): Buffer {
   return key;
 }
 
+/** Checks key encoding and separation without exposing key material. */
+export function isInstituteSecurityKeyConfigurationReady(environment: {
+  INSTITUTE_PII_ENCRYPTION_KEY?: string;
+  INSTITUTE_PII_LOOKUP_KEY?: string;
+  INSTITUTE_SESSION_HASH_KEY?: string;
+} = process.env as unknown as { INSTITUTE_PII_ENCRYPTION_KEY?: string; INSTITUTE_PII_LOOKUP_KEY?: string; INSTITUTE_SESSION_HASH_KEY?: string }): boolean {
+  try {
+    const values = [environment.INSTITUTE_PII_ENCRYPTION_KEY, environment.INSTITUTE_PII_LOOKUP_KEY, environment.INSTITUTE_SESSION_HASH_KEY];
+    if (values.some((value) => !value)) return false;
+    const keys = values.map((value) => Buffer.from(value!, 'base64'));
+    if (keys.some((key) => key.length !== 32)) return false;
+    return keys[0]!.compare(keys[1]!) !== 0 && keys[0]!.compare(keys[2]!) !== 0 && keys[1]!.compare(keys[2]!) !== 0;
+  } catch {
+    return false;
+  }
+}
+
 export function encryptPrivateValue(value: string, environment: NodeJS.ProcessEnv = process.env): Buffer {
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', keyFrom(environment, 'INSTITUTE_PII_ENCRYPTION_KEY'), iv);

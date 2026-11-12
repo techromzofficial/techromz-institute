@@ -10,6 +10,7 @@ export function getInstituteDatabasePool(): Pool {
   pool = mysql.createPool({
     host: config.host, port: config.port, database: config.database, user: config.user, password: config.password,
     waitForConnections: true, connectionLimit: config.connectionLimit, queueLimit: 50, enableKeepAlive: true,
+    connectTimeout: 10_000,
     charset: 'utf8mb4', timezone: 'Z', decimalNumbers: true,
     ...(config.ssl ? { ssl: { rejectUnauthorized: true } } : {}),
   });

@@ -3,9 +3,8 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, Building2, CheckCircle2, Mail, Map, MessageCircle } from 'lucide-react';
 import ResponsiveLearningImage from '@/features/education/components/ResponsiveLearningImage';
 import { InstituteButtonLink } from '@/features/education/components/InstituteButton';
-import { ARDUINO_BUNDLE_SCHEDULE, formatInstituteDate, getGeneralContactLinks, getInstituteContactLinks, getOrganisationContactLinks, getTrackContactLinks, INSTITUTE_CONTACT } from '@/features/education/config/contact';
+import { getGeneralContactLinks, getInstituteContactLinks, getOrganisationContactLinks, getTrackContactLinks, INSTITUTE_CONTACT } from '@/features/education/config/contact';
 import { instituteMetadata } from '@/features/education/config/site';
-import { educationCourseService } from '@/features/education/services/courseService';
 
 export const metadata: Metadata = instituteMetadata('/institute/contact', 'Contact Techromz Institute', 'Contact Techromz Institute about demonstration courses, planned learning roadmaps or proposed organisational training.');
 
@@ -17,12 +16,8 @@ const topics = [
 
 export default async function ContactPage() {
   const general = getGeneralContactLinks();
-  const arduino = await educationCourseService.getCourse('arduino-for-beginners-bundle');
-  const languages = arduino?.bundle?.languages.join(' and ') ?? 'Sinhala and English';
   const faqs = [
     { question: 'How can I enquire about a course?', answer: 'Use the verified WhatsApp or email links on this page and include the course name plus a short description of your question. Sending an enquiry does not enrol you or reserve a place.' },
-    { question: 'When does Arduino bundle registration open?', answer: `The listed registration date is ${formatInstituteDate(ARDUINO_BUNDLE_SCHEDULE.registrationOpens)}, and the course starts ${formatInstituteDate(ARDUINO_BUNDLE_SCHEDULE.courseStarts)}. Registration is not yet available through this website.` },
-    { question: 'What languages are listed for the Arduino bundle?', answer: `${languages} are listed for the demonstration Arduino bundle.` },
     { question: 'Can I discuss training for an organisation?', answer: 'Yes. You can outline your audience and learning needs, but scope, availability, delivery and fees require consultation.' },
     { question: 'Does sending an enquiry reserve a place?', answer: 'No. An enquiry does not confirm registration, availability or a booking.' },
   ];

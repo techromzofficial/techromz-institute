@@ -1,0 +1,10 @@
+.visible { animation: enquiry-enter 220ms ease-out both; }
+.hidden { opacity: 0; transition: opacity 180ms ease-out; }
+.checkmark { animation: enquiry-check 300ms ease-out both; }
+.checkmark path { stroke-dasharray: 16; stroke-dashoffset: 0; animation: enquiry-draw 300ms ease-out both; }
+@keyframes enquiry-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes enquiry-check { from { transform: scale(.85); } to { transform: scale(1); } }
+@keyframes enquiry-draw { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .notification, .checkmark, .checkmark path { animation: none; transition: none; }
+}

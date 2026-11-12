@@ -1,4 +1,5 @@
 export function validateDiagnosticRecipient(value: string): string;
+export function readHiddenTerminalValue(input: NodeJS.ReadStream, output: NodeJS.WriteStream, prompt: string): Promise<Buffer>;
 export function sendInstituteSmtpDiagnostic(input: {
   recipient: string;
   password: string;

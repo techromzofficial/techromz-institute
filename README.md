@@ -11,15 +11,19 @@ npm ci
 npm test
 npm run type-check
 npm run lint
-INSTITUTE_ONLY_MODE=true npm run build
+npm run build
 npm audit
 ```
 
-All Institute write features and indexing are disabled by default. Copy `.env.example` only as a reference; never commit a populated `.env` file.
+The Institute homepage is served at `/` by default. Set `INSTITUTE_ONLY_MODE=false` only when intentionally running the legacy Retail app. All Institute write features and indexing are disabled by default. Copy `.env.example` only as a reference; never commit a populated `.env` file.
+
+Course enquiries require the configured database, SMTP email verification and scheduled delivery worker. Public routes do not expose OTPs or a local outbox. See [course enquiry activation](docs/institute-course-enquiry-hostinger-activation.md) and [V3 ZIP deployment](docs/HOSTINGER_DEPLOYMENT_V3.md).
 
 ## Deployment and source synchronization
 
 - [Hostinger deployment](docs/HOSTINGER_DEPLOYMENT.md)
+- [Hostinger course enquiry deployment V4](docs/HOSTINGER_DEPLOYMENT_V4.md)
+- [Hostinger course enquiry deployment V5](docs/HOSTINGER_DEPLOYMENT_V5.md)
 - [Keeping this repository synchronized](docs/SOURCE_SYNCHRONIZATION.md)
 - [Institute release scope](docs/institute-release-scope.md)
 

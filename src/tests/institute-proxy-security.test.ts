@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+import { setEnquirySession } from '@/features/education/administration/enquirySession';
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,6 +16,7 @@ vi.mock('@/features/education/administration/config', () => ({ isInstituteFeatur
 vi.mock('@/features/education/database/pool', () => ({ getInstituteDatabasePool: () => pool }));
 vi.mock('@/features/education/administration/smtp', () => ({ getSmtpEmailDelivery }));
 vi.mock('@/features/education/administration/contactVerification', () => ({
+  ContactChallengeRateLimitError: class extends Error {},
   createContactChallenge: vi.fn(async () => ({ challengeId: '8fa27d53-a458-4fba-a295-7103d610f635' })),
   verifyContactChallenge: vi.fn(async () => ({ verified: false })),
 }));
@@ -45,6 +48,7 @@ describe('IP-independent Hostinger abuse protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('INSTITUTE_ABUSE_PROTECTION_MODE', 'identifier-and-global');
+    vi.stubEnv('INSTITUTE_SESSION_HASH_KEY', Buffer.alloc(32, 7).toString('base64'));
     vi.stubEnv('INSTITUTE_ALLOWED_HOSTS', 'techromzit.com,www.techromzit.com');
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -71,19 +75,19 @@ describe('IP-independent Hostinger abuse protection', () => {
   });
 
   it('layers destination, mailbox and global challenge limits independently of forged IPs', async () => {
-    await challenge(post('/api/institute/contact-verification/challenge', { type: 'email', destination: 'Learner@example.com', purpose: 'course_enquiry' }));
+    await challenge(post('/api/institute/contact-verification/challenge', { type: 'email', destination: 'Learner@example.com', purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }));
     expect(limiterCalls()).toEqual([
       ['global', 'contact.challenge.global'], ['learner@example.com', 'contact.challenge.cooldown'],
-      ['learner@example.com', 'contact.challenge.destination24h'], ['enrolments-mailbox', 'contact.challenge.mailbox24h'],
+      ['learner@example.com', 'contact.challenge.destination24h'], ['enrolments-mailbox', 'contact.challenge.mailbox24h'], [expect.any(String), 'contact.challenge.session'],
     ]);
   });
 
   it('uses challenge and account identifiers plus shared global limits', async () => {
     const challengeId = '8fa27d53-a458-4fba-a295-7103d610f635';
-    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry' }));
+    await verifyContact(post('/api/institute/contact-verification/verify', { challengeId, token: '123456', purpose: 'course_enquiry', courseId: 'electronics-repair-troubleshooting' }, { ...standardHeaders, cookie: signedCookie() }));
     await login(post('/api/institute/admin/auth/login', { username: 'admin.user', password: 'not-a-real-password' }));
     expect(limiterCalls()).toEqual([
-      ['global', 'contact.verify.global'], [challengeId, 'contact.verify.challenge'],
+      ['global', 'contact.verify.global'], [challengeId, 'contact.verify.challenge'], ['S'.repeat(43), 'contact.verify.session'],
       ['global', 'admin.login.global'], ['admin.user', 'admin.login.account'],
     ]);
   });
@@ -104,3 +108,9 @@ describe('IP-independent Hostinger abuse protection', () => {
     expect(consumeSharedRateLimit).not.toHaveBeenCalled();
   });
 });
+
+function signedCookie() {
+  const response = new NextResponse();
+  setEnquirySession(response, 'S'.repeat(43));
+  return response.headers.get('set-cookie')!.split(';')[0]!;
+}

@@ -29,12 +29,22 @@ export interface EducationWeeklyCourseSession {
 export interface EducationCourseAdmissions {
   heading: string;
   summary: string;
-  applicationItems: string[];
-  reviewCriteria: { label: string; weight: string }[];
-  alternativeRoute: string;
-  reviewNote: string;
+  applicationItems?: string[];
+  reviewCriteria?: { label: string; weight: string }[];
+  alternativeRoute?: string;
+  reviewNote?: string;
   capacityNotice?: string;
 }
+
+export const BEGINNER_SESSION_ADMISSIONS: EducationCourseAdmissions = {
+  heading: 'Beginner entry with a small-session format.',
+  summary: 'Places will be offered first come, first served, subject to the published seat-confirmation process. No CV or portfolio is required.',
+  capacityNotice: 'Maximum 20 students per session. This is the planned capacity—not a live count of remaining seats.',
+  applicationItems: [],
+  reviewCriteria: [],
+  alternativeRoute: '',
+  reviewNote: '',
+};
 export interface EducationPlannedCourseDetails {
   provider: string;
   duration: string;

@@ -1,17 +1,13 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import mysql from 'mysql2/promise';
-
-const required = ['INSTITUTE_DB_HOST', 'INSTITUTE_DB_PORT', 'INSTITUTE_DB_NAME', 'INSTITUTE_DB_USER', 'INSTITUTE_DB_PASSWORD'];
-for (const key of required) {
-  if (!process.env[key]?.trim()) throw new Error(`Missing required server-only database setting: ${key}`);
-}
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const mysql = require('mysql2/promise');
+import { readDatabaseConfig } from './institute-provisioning-common.mjs';
 
 const connection = await mysql.createConnection({
-  host: process.env.INSTITUTE_DB_HOST, port: Number(process.env.INSTITUTE_DB_PORT), database: process.env.INSTITUTE_DB_NAME,
-  user: process.env.INSTITUTE_DB_USER, password: process.env.INSTITUTE_DB_PASSWORD, charset: 'utf8mb4', timezone: 'Z', multipleStatements: true,
-  ...(process.env.INSTITUTE_DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {}),
+  ...readDatabaseConfig(process.env), multipleStatements: true,
 });
 
 try {

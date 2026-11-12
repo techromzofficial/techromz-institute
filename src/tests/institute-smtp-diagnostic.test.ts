@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { PassThrough } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
-import { runInteractiveSmtpDiagnostic, sendInstituteSmtpDiagnostic, validateDiagnosticRecipient } from '../../scripts/institute-smtp-diagnostic-lib.mjs';
+import { readHiddenTerminalValue, runInteractiveSmtpDiagnostic, sendInstituteSmtpDiagnostic, validateDiagnosticRecipient } from '../../scripts/institute-smtp-diagnostic-lib.mjs';
 
 function fakeTerminal() {
   const input = new PassThrough() as PassThrough & { isTTY: boolean; setRawMode(mode: boolean): void };
@@ -21,6 +21,16 @@ function writeWhenPrompted(terminal: ReturnType<typeof fakeTerminal>, prompt: st
 }
 
 describe('operator-only SMTP diagnostic', () => {
+  it('reads an OTP without echoing it and restores terminal mode', async () => {
+    const terminal = fakeTerminal();
+    const input = readHiddenTerminalValue(terminal.input as never, terminal.output as never, 'OTP (hidden): ');
+    await writeWhenPrompted(terminal, 'OTP (hidden):', '123456\r');
+    const bytes = await input;
+    expect(bytes.toString('utf8')).toBe('123456');
+    expect(terminal.transcript()).not.toContain('123456');
+    expect(terminal.input.setRawMode).toHaveBeenLastCalledWith(false);
+    bytes.fill(0);
+  });
   it('defaults to a disconnected dry-run with no database or registration effects', () => {
     const result = spawnSync(process.execPath, ['scripts/institute-smtp-diagnostic.mjs'], { cwd: process.cwd(), encoding: 'utf8', env: { NODE_ENV: 'test' } });
     expect(result.status).toBe(0);

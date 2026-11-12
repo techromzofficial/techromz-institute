@@ -124,8 +124,8 @@ describe('Institute information structure', () => {
     expect(screen.getByText('enrolments@techromzit.com')).toBeInTheDocument();
     expect(whatsappButtons[1]).toHaveAttribute('href', getInstituteContactLinks().whatsapp);
     expect(whatsappButtons[2]).toHaveAttribute('href', getTrackContactLinks('learning roadmap').whatsapp);
-    expect(screen.getByText(/1 November 2026.*1 December 2026/)).toBeInTheDocument();
-    expect(screen.getByText('Sinhala and English are listed for the demonstration Arduino bundle.')).toBeInTheDocument();
+    expect(screen.queryByText(/1 November 2026.*1 December 2026/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Arduino bundle/i)).not.toBeInTheDocument();
     expect(screen.getByText(/does not confirm registration, availability or a booking/i)).toBeInTheDocument();
     expect(screen.getByText(/does not submit or store an enquiry/i)).toBeInTheDocument();
   });
@@ -183,6 +183,6 @@ describe('Institute information structure', () => {
       expect(companyLink).toHaveAttribute('rel', 'noopener noreferrer');
     }
     expect(screen.getByText(/© \d{4} Techromz Institute\. All rights reserved\./)).toBeInTheDocument();
-    expect(screen.getByText(/Preview only · Details require confirmation before launch/)).toBeInTheDocument();
+    expect(screen.queryByText(/Preview only.*Details require confirmation before (launch|lunch)/i)).not.toBeInTheDocument();
   });
 });

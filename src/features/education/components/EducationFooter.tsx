@@ -62,7 +62,6 @@ export default function EducationFooter() {
     <div className="border-t border-slate-800">
       <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 text-xs leading-5 text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
         <p>© {year} Techromz Institute. All rights reserved.</p>
-        <p>Preview only · Details require confirmation before launch</p>
       </div>
     </div>
   </footer>;

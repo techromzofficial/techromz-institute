@@ -1,3 +1,5 @@
+> Current proxy/IP policy: see [HOSTINGER_PROXY_ABUSE_PROTECTION.md](HOSTINGER_PROXY_ABUSE_PROTECTION.md). Older trusted-header prerequisites below are historical and superseded; IP headers are now optional unverified supplementary hints.
+
 # Hostinger security without trusted client IP
 
 ## Security decision

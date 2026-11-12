@@ -9,6 +9,19 @@ const smtpEnvironment = {
 const key = Buffer.alloc(32, 8).toString('base64');
 
 describe('Institute SMTP configuration and delivery', () => {
+  it('reads runtime SMTP deployment names and preserves fail-closed precedence', () => {
+    const environment = {
+      SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: '465', SMTP_SECURE: 'true',
+      SMTP_USER: 'mailbox@example.com', SMTP_PASS: 'mock-only-password', SMTP_FROM_EMAIL: 'mailbox@example.com',
+    } as unknown as NodeJS.ProcessEnv;
+    expect(readInstituteSmtpConfig(environment)).toMatchObject({ user: 'mailbox@example.com', from: 'mailbox@example.com', secure: true });
+    expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, ...environment })).toThrow('Conflicting SMTP aliases');
+    expect(readInstituteSmtpConfig({ ...smtpEnvironment, SMTP_PASS: 'mock-only-password' }).user).toBe('enrolments@techromzit.com');
+    expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, ...environment, SMTP_PASS: '' })).toThrow(InstituteSmtpConfigurationError);
+    expect(() => readInstituteSmtpConfig({ ...environment, SMTP_SECURE: 'false' })).toThrow(InstituteSmtpConfigurationError);
+    expect(() => readInstituteSmtpConfig({ ...environment, SMTP_FROM_EMAIL: 'other@example.com' })).toThrow(InstituteSmtpConfigurationError);
+  });
+
   it('accepts only the approved TLS endpoint and sender and fails closed without credentials', () => {
     expect(readInstituteSmtpConfig(smtpEnvironment)).toMatchObject({ host: 'smtp.hostinger.com', port: 465, user: 'enrolments@techromzit.com', from: 'enrolments@techromzit.com', secure: true });
     expect(() => readInstituteSmtpConfig({ ...smtpEnvironment, INSTITUTE_SMTP_PASSWORD: '' })).toThrow(InstituteSmtpConfigurationError);
@@ -25,7 +38,7 @@ describe('Institute SMTP configuration and delivery', () => {
     expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ host: 'smtp.hostinger.com', port: 465, secure: true, tls: { rejectUnauthorized: true, minVersion: 'TLSv1.2' } }));
     const message = sendMail.mock.calls[0]![0];
     expect(message).toMatchObject({ from: 'Techromz Institute <enrolments@techromzit.com>', to: 'learner@example.com', subject: 'Your Techromz Institute verification code' });
-    expect(String(message.html)).toContain('123456'); expect(String(message.html)).toContain('10 minutes'); expect(String(message.html)).toContain('info@techromzit.com');
+    expect(String(message.html)).toContain('123456'); expect(String(message.html)).toContain('5 minutes'); expect(String(message.text)).toContain('5 minutes'); expect(String(message.html)).toContain('info@techromzit.com');
     expect(JSON.stringify(message)).not.toContain('mock-only-password');
   });
 
@@ -39,9 +52,12 @@ describe('Institute SMTP configuration and delivery', () => {
 describe('SMTP-backed challenge lifecycle', () => {
   it('does not commit a challenge until the mocked provider accepts the email', async () => {
     vi.stubEnv('INSTITUTE_PII_LOOKUP_KEY', key); vi.stubEnv('INSTITUTE_SESSION_HASH_KEY', key);
-    const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async () => [{ affectedRows: 1 }, []]) };
+    const connection = { beginTransaction: vi.fn(), commit: vi.fn(), rollback: vi.fn(), release: vi.fn(), execute: vi.fn(async (_sql: string, _values?: unknown[]) => [{ affectedRows: 1 }, []]) };
     await expect(createContactChallenge({ getConnection: async () => connection } as never, { type: 'email', destination: 'learner@example.com', deliver: async () => { throw new Error('SMTP unavailable'); } })).rejects.toThrow('SMTP unavailable');
     expect(connection.commit).not.toHaveBeenCalled(); expect(connection.rollback).toHaveBeenCalledOnce();
+    expect(connection.execute).toHaveBeenCalledWith(expect.stringContaining('INTERVAL ? MINUTE'), expect.arrayContaining([5]));
+    expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_challenges'))).toBe(true);
+    expect(connection.execute.mock.calls.some(([sql]) => sql?.includes('DELETE FROM institute_contact_verification_grants'))).toBe(true);
     vi.unstubAllEnvs();
   });
 

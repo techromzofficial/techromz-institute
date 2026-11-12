@@ -1,0 +1,753 @@
+{
+  "scope": "All application src, operational scripts and next.config.mjs; test assertions and historical packagers excluded. Named references include dynamic key maps, not just process.env.KEY syntax. No values recorded.",
+  "variables": [
+    {
+      "name": "BACKEND_API_URL",
+      "references": [
+        {
+          "file": "next.config.mjs",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "name": "ENQUIRY_RECIPIENT_EMAIL",
+      "references": [
+        {
+          "file": "src/features/education/administration/courseEnquiry.ts",
+          "line": 62
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_ABUSE_PROTECTION_MODE",
+      "references": [
+        {
+          "file": "src/features/education/administration/rateLimit.ts",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_ADMIN_ENABLED",
+      "references": [
+        {
+          "file": "src/features/education/administration/config.ts",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_ALLOWED_HOSTS",
+      "references": [
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 27
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 33
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 80
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_ALLOW_INDEXING",
+      "references": [
+        {
+          "file": "src/features/education/config/site.ts",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_COURSE_ENQUIRY_ENABLED",
+      "references": [
+        {
+          "file": "src/features/education/administration/config.ts",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_COURSE_ENQUIRY_LOCAL_TEST_MODE",
+      "references": [
+        {
+          "file": "src/features/education/administration/localCourseEnquiry.ts",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_CONNECTION_LIMIT",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 27
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_HOST",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 33
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 7
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_NAME",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 33
+        },
+        {
+          "file": "scripts/check-institute-db-status.mjs",
+          "line": 25
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 7
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_PASSWORD",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 34
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 7
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_PORT",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 26
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 28
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 7
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 9
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_SSL",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 30
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 31
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 11
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DB_USER",
+      "references": [
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/database/config.ts",
+          "line": 33
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 7
+        },
+        {
+          "file": "scripts/institute-provisioning-common.mjs",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_DEV_ALLOWED_ORIGINS",
+      "references": [
+        {
+          "file": "next.config.mjs",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_ENQUIRY_WORKER_SECRET",
+      "references": [
+        {
+          "file": "src/features/education/administration/enquiryWorkerAuth.ts",
+          "line": 7
+        },
+        {
+          "file": "src/features/education/administration/enquiryWorkerAuth.ts",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_MARIADB_INTEGRATION",
+      "references": []
+    },
+    {
+      "name": "INSTITUTE_ONLY_MODE",
+      "references": [
+        {
+          "file": "next.config.mjs",
+          "line": 33
+        },
+        {
+          "file": "src/middleware.js",
+          "line": 6
+        },
+        {
+          "file": "src/middleware.js",
+          "line": 85
+        },
+        {
+          "file": "src/features/education/config/site.ts",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_PAYMENT_ENABLED",
+      "references": [
+        {
+          "file": "src/features/education/administration/config.ts",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_PII_ENCRYPTION_KEY",
+      "references": [
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 17
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 22
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 34
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_PII_LOOKUP_KEY",
+      "references": [
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 18
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 22
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_READ_ONLY_DIAGNOSTIC",
+      "references": []
+    },
+    {
+      "name": "INSTITUTE_REGISTRATION_ENABLED",
+      "references": [
+        {
+          "file": "src/features/education/administration/config.ts",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SEAT_AVAILABILITY_ENABLED",
+      "references": [
+        {
+          "file": "src/features/education/administration/config.ts",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SECURITY_DIAGNOSTICS",
+      "references": [
+        {
+          "file": "src/app/api/institute/certificates/verify/route.ts",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SESSION_HASH_KEY",
+      "references": [
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 19
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 20
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 22
+        },
+        {
+          "file": "src/features/education/administration/crypto.ts",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_FROM",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_HOST",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_PASSWORD",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_PORT",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_SECURE",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_SMTP_USER",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "name": "INSTITUTE_TEST_DATABASE_NAME",
+      "references": []
+    },
+    {
+      "name": "INSTITUTE_TRUSTED_CLIENT_IP_HEADER",
+      "references": [
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 38
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "name": "NEXT_DIST_DIR",
+      "references": [
+        {
+          "file": "next.config.mjs",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "name": "NEXT_PUBLIC_API_BASE_URL",
+      "references": [
+        {
+          "file": "src/lib/api/client.js",
+          "line": 5
+        },
+        {
+          "file": "src/lib/api/client.js",
+          "line": 9
+        },
+        {
+          "file": "src/lib/api/client.js",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "name": "NEXT_PUBLIC_API_URL",
+      "references": [
+        {
+          "file": "src/lib/api/client.js",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "NEXT_PUBLIC_APP_URL",
+      "references": [
+        {
+          "file": "src/app/layout.jsx",
+          "line": 16
+        },
+        {
+          "file": "src/features/education/config/site.ts",
+          "line": 4
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 15
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 20
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 77
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 79
+        },
+        {
+          "file": "scripts/course-enquiry-e2e.mjs",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "name": "NEXT_PUBLIC_AUTH_COOKIE",
+      "references": [
+        {
+          "file": "src/middleware.js",
+          "line": 5
+        },
+        {
+          "file": "src/lib/api/client.js",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "NEXT_PUBLIC_PUSHER_CLUSTER",
+      "references": []
+    },
+    {
+      "name": "NEXT_PUBLIC_PUSHER_KEY",
+      "references": []
+    },
+    {
+      "name": "NEXT_PUBLIC_USE_ADMIN_MOCKS",
+      "references": [
+        {
+          "file": "src/services/api/adminDataSource.ts",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "name": "NODE_ENV",
+      "references": [
+        {
+          "file": "next.config.mjs",
+          "line": 8
+        },
+        {
+          "file": "next.config.mjs",
+          "line": 15
+        },
+        {
+          "file": "next.config.mjs",
+          "line": 26
+        },
+        {
+          "file": "src/lib/api/client.js",
+          "line": 9
+        },
+        {
+          "file": "src/lib/api/client.js",
+          "line": 223
+        },
+        {
+          "file": "src/features/education/administration/enquirySession.ts",
+          "line": 15
+        },
+        {
+          "file": "src/features/education/administration/localCourseEnquiry.ts",
+          "line": 35
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 10
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 15
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 28
+        },
+        {
+          "file": "src/features/education/administration/requestSecurity.ts",
+          "line": 46
+        },
+        {
+          "file": "src/components/layout/Footer.jsx",
+          "line": 26
+        },
+        {
+          "file": "src/components/layout/FooterAppBadge.jsx",
+          "line": 13
+        },
+        {
+          "file": "src/app/api/institute/course-enquiries/route.ts",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "name": "OTP_EXPIRY_MINUTES",
+      "references": [
+        {
+          "file": "src/features/education/administration/otpPolicy.ts",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "name": "OTP_MAX_ATTEMPTS",
+      "references": [
+        {
+          "file": "src/features/education/administration/otpPolicy.ts",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "name": "OTP_RESEND_COOLDOWN_SECONDS",
+      "references": [
+        {
+          "file": "src/features/education/administration/otpPolicy.ts",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "name": "SMTP_FROM_EMAIL",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "name": "SMTP_HOST",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "name": "SMTP_PASS",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "name": "SMTP_PORT",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "name": "SMTP_SECURE",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "name": "SMTP_USER",
+      "references": [
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 11
+        },
+        {
+          "file": "src/features/education/administration/smtp.ts",
+          "line": 21
+        }
+      ]
+    }
+  ]
+}

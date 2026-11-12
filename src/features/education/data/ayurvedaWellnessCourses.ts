@@ -1,4 +1,4 @@
-import type { EducationCourse, EducationLevel, EducationWeeklyCourseSession } from '../contracts/course';
+import { BEGINNER_SESSION_ADMISSIONS, type EducationCourse, type EducationLevel, type EducationWeeklyCourseSession } from '../contracts/course';
 
 type AyurvedaCourseDraft = {
   slug: string;
@@ -84,6 +84,7 @@ function createCourse(draft: AyurvedaCourseDraft): EducationCourse {
       provider: 'Techromz Institute',
       duration: 'To be approved',
       cohortCapacity: 'Capacity to be approved',
+      admissions: BEGINNER_SESSION_ADMISSIONS,
       prerequisites: 'Entry requirements to be approved',
       schedule: 'Schedule to be approved',
       totalLiveLearning: 'Learning hours to be approved',

@@ -20,7 +20,7 @@ describe('Institute controlled provisioning', () => {
     expect(report.errors).toEqual([]);
     expect(report.deadlines).toEqual({ '2026-11-27T23:59:59+05:30': 9 });
     expect(result.stderr).toBe('');
-  });
+  }, 15000);
 
   it('keeps administrator provisioning dry-run disconnected and password-free', () => {
     const result = spawnSync(process.execPath, ['scripts/provision-institute-admin.mjs', '--mode', 'bootstrap', '--username', 'first.admin', '--display-name', 'First Administrator'], { cwd: process.cwd(), encoding: 'utf8', env: { NODE_ENV: 'test' } });

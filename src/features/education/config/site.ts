@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { EducationCourse } from '../contracts/course';
 
 const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-export const instituteOnlyMode = process.env.INSTITUTE_ONLY_MODE === 'true';
+export const instituteOnlyMode = process.env.INSTITUTE_ONLY_MODE !== 'false';
 const indexingRequested = process.env.INSTITUTE_ALLOW_INDEXING === 'true';
 
 function validProductionOrigin(value?: string) {
