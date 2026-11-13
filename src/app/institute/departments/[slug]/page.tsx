@@ -1,3 +1,4 @@
+import { DepartmentStructuredData } from '@/features/education/components/StructuredData';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import DepartmentExperience from '@/features/education/components/DepartmentExperience';
@@ -13,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const department = await educationContentService.getDepartment(slug);
   return department
-    ? instituteMetadata(`/institute/departments/${slug}`, `${department.name} Department`, department.introduction)
+    ? instituteMetadata(`/institute/departments/${slug}`, ` ${department.name.replace(/^Department of /i, '').replace(/ Department$/i, '')} Department`.trim(), department.introduction)
     : { title: { absolute: 'Department not found | Techromz Institute' }, robots: { index: false, follow: false } };
 }
 
@@ -25,6 +26,5 @@ export default async function DepartmentPage({ params }: { params: Promise<{ slu
     educationContentService.listLearningTracks(),
   ]);
   const availableCourses = courses.filter((course) => course !== null);
-  if (department.slug === 'arts-languages') return <ArtsLanguagesDepartmentExperience department={department} courses={availableCourses} />;
-  return <DepartmentExperience department={department} courses={availableCourses} track={tracks.find((item) => item.title === department.relatedTrackTitle)} />;
+  return <><DepartmentStructuredData slug={department.slug} name={department.name} courses={availableCourses}/>{department.slug === 'arts-languages' ? <ArtsLanguagesDepartmentExperience department={department} courses={availableCourses} /> : <DepartmentExperience department={department} courses={availableCourses} track={tracks.find((item) => item.title === department.relatedTrackTitle)} />}</>;
 }

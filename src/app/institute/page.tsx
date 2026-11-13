@@ -1,3 +1,5 @@
+import { JsonLd, organization } from '@/features/education/components/StructuredData';
+import { instituteIndexingEnabled } from '@/features/education/config/site';
 import type { Metadata } from 'next';
 import InstituteHomepage from '@/features/education/components/InstituteHomepage';
 import { educationContentService } from '@/features/education/services/contentService';
@@ -13,5 +15,5 @@ export default async function InstituteHomePage() {
     educationCourseService.listCourses(),
   ]);
 
-  return <InstituteHomepage departments={departments} tracks={tracks} courses={courses} />;
+  return <>{instituteIndexingEnabled && <JsonLd data={{ '@context': 'https://schema.org', '@graph': [organization, { '@type': 'WebSite', '@id': 'https://techromzit.com/institute#website', url: 'https://techromzit.com/institute', name: organization.name, publisher: { '@id': organization['@id'] } }] }}/>}<InstituteHomepage departments={departments} tracks={tracks} courses={courses} /></>;
 }

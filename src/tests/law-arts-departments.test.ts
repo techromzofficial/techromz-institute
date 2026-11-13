@@ -44,7 +44,7 @@ describe('Law and Arts department catalogue integration', () => {
     expect(departments).toHaveLength(7);
     expect(law?.courseSlugs).toEqual(lawSlugs);
     expect(arts?.courseSlugs).toEqual(artsSlugs);
-    expect(arts?.developmentStatus).toContain('Nine planned course pages');
+    expect(arts?.developmentStatus).toContain('5 planned course pages');
   });
 
   it.each(publishedArtsSlugs)('keeps %s planned, no-index and enquiry-only', async (slug) => {

@@ -28,10 +28,10 @@ describe('AI course naming and visibility', () => {
     expect(alignedSection).toHaveClass('max-w-5xl');
     expect(within(alignedSection).getByText('Admissions')).toBeInTheDocument();
     expect(screen.getByText('Sinhala')).toBeInTheDocument();
-    expect(screen.getByText(/1 December 2026 · 5:30 PM – 7:30 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
+    expect(screen.getByText(/1 December 2026 · 6:00 PM – 8:00 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My AI Study Assistant' })).toBeInTheDocument();
     expect(screen.getByText(/illustrative interface only/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/does not reserve a seat or confirm enrolment/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/does not reserve a place or confirm enrolment/i).length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Frequently asked questions' })).toBeInTheDocument();
     expect(screen.getByText('Do I need coding experience?')).toBeInTheDocument();
 
@@ -55,7 +55,7 @@ describe('AI course naming and visibility', () => {
     expect(screen.getByText('Technical readiness')).toBeInTheDocument();
     expect(screen.getAllByText('AI Knowledge Lab — Intermediate').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /AI Kickstart.*Beginner/i })).toHaveAttribute('href', '/institute/courses/build-your-first-ai-assistant');
-    expect(screen.getAllByText(/does not submit a formal application or reserve a seat/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/does not reserve a place or confirm enrolment/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/not first come, first served/i)).toBeInTheDocument();
 
     const contact = getInstituteContactLinks('AI Knowledge Lab');
@@ -70,10 +70,10 @@ describe('AI course naming and visibility', () => {
     expect(screen.getByText('Build your first retail application, one step at a time.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /simple retail product catalogue and stock indicators/i })).toHaveAttribute('src', expect.stringContaining('retail-kickstart-1200.webp'));
     expect(screen.getByText('LKR 7,500')).toBeInTheDocument();
-    expect(screen.getByText('1 November 2026')).toBeInTheDocument();
-    expect(screen.getByText(/1 December 2026 · 7:30 PM – 9:30 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Dates are interpreted in Asia\/Colombo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/does not reserve a seat or confirm enrolment/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText('1 November 2026')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 December 2026 · 8:00 PM – 10:00 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Sri Lanka time/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/does not reserve a place or confirm enrolment/i).length).toBeGreaterThan(0);
     expect(screen.getByText('At least five of eight live classes attended')).toBeInTheDocument();
     expect(screen.getByText('Final project submission')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /Register your interest.*WhatsApp/i })[0]).toHaveAttribute('href', getInstituteContactLinks('Retail Kickstart').whatsapp);
@@ -86,8 +86,8 @@ describe('AI course naming and visibility', () => {
     expect(screen.getByText('Connect your code. Build a working retail application.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /application code beside a retail products and inventory interface/i })).toHaveAttribute('src', expect.stringContaining('retail-developer-lab-1200.webp'));
     expect(screen.getByText('LKR 15,000')).toBeInTheDocument();
-    expect(screen.getByText('1 November 2026')).toBeInTheDocument();
-    expect(screen.getByText(/2 December 2026 · 7:30 PM – 9:30 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
+    expect(screen.queryByText('1 November 2026')).not.toBeInTheDocument();
+    expect(screen.getAllByText('To be announced').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Selective, fair and transparent admission' })).toBeInTheDocument();
     expect(screen.getByText(/No payment will be collected before the admission decision/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Retail Kickstart.*Beginner/i })).toHaveAttribute('href', '/institute/courses/retail-kickstart');
@@ -105,8 +105,8 @@ describe('AI course naming and visibility', () => {
     expect(screen.getByText('Build, secure and deploy your retail application.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /deployment checks on a laptop and a multi-store inventory dashboard/i })).toHaveAttribute('src', expect.stringContaining('retail-launchpad-1200.webp'));
     expect(screen.getByText('LKR 25,000')).toBeInTheDocument();
-    expect(screen.getByText('1 November 2026')).toBeInTheDocument();
-    expect(screen.getByText(/3 December 2026 · 7:30 PM – 9:30 PM \(Sri Lanka Time\)/)).toBeInTheDocument();
+    expect(screen.queryByText('1 November 2026')).not.toBeInTheDocument();
+    expect(screen.getAllByText('To be announced').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Project-based admission with a readiness discussion' })).toBeInTheDocument();
     expect(screen.getByText(/No payment is collected before the admission decision/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Retail Developer Lab.*Intermediate/i })).toHaveAttribute('href', '/institute/courses/retail-developer-lab');
@@ -134,8 +134,9 @@ describe('AI course naming and visibility', () => {
     expect(screen.getByRole('link', { name: /Mobile Launchpad.*Advanced/i })).toHaveAttribute('href', '/institute/courses/mobile-launchpad');
     expect(screen.getByText(fee)).toBeInTheDocument();
     expect(screen.getAllByText(level).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('27 November 2026').length).toBeGreaterThan(0);
-    expect(screen.getByText('To be announced')).toBeInTheDocument();
+    expect(screen.queryByText('27 November 2026')).not.toBeInTheDocument();
+    if (slug === 'mobile-kickstart') expect(screen.getAllByText(/7 December 2026/).length).toBeGreaterThan(0);
+    else expect(screen.getAllByText('To be announced').length).toBeGreaterThan(0);
     expect(screen.getByText('At least five of eight live classes attended')).toBeInTheDocument();
     expect(screen.getByText('At least 60% in the final practical assessment')).toBeInTheDocument();
     expect(screen.getAllByText(/one free resubmission within 14 calendar days/i).length).toBeGreaterThan(0);

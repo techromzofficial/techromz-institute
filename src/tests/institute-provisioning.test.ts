@@ -12,13 +12,14 @@ describe('Institute controlled provisioning', () => {
     expect(JSON.stringify(manifest)).not.toMatch(/student|payment|certificate/i);
   });
 
-  it('runs catalogue validation disconnected by default with all approved deadlines', () => {
+  it('fails closed in disconnected validation while registration deadlines await approval', () => {
     const result = spawnSync(process.execPath, ['scripts/provision-institute-catalogue.mjs'], { cwd: process.cwd(), encoding: 'utf8', env: { NODE_ENV: 'test' } });
-    expect(result.status).toBe(0);
+    expect(result.status).toBe(2);
     const report = JSON.parse(result.stdout);
-    expect(report.mode).toBe('dry-run'); expect(report.courses).toBe(9); expect(report.maxSeats).toBe(30); expect(report.valid).toBe(true);
-    expect(report.errors).toEqual([]);
-    expect(report.deadlines).toEqual({ '2026-11-27T23:59:59+05:30': 9 });
+    expect(report.mode).toBe('dry-run'); expect(report.courses).toBe(9); expect(report.maxSeats).toBe(30); expect(report.valid).toBe(false);
+    expect(report.errors).toHaveLength(9);
+    expect(report.errors.every((error: string) => error.endsWith('confirmed registration deadline is missing.'))).toBe(true);
+    expect(report.deadlines).toEqual({ null: 9 });
     expect(result.stderr).toBe('');
   });
 

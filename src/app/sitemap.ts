@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...institutePublicPaths,
     ...courses.filter(isApprovedCourseForIndexing).map((course) => `/institute/courses/${course.slug}`),
   ];
-  return paths.map((path) => ({
+  return [...new Set(paths)].map((path) => ({
     url: new URL(path, origin).toString(),
     changeFrequency: path.includes('/courses/') ? 'monthly' : 'weekly',
     priority: path === '/institute' ? 1 : path === '/institute/courses' ? 0.9 : 0.7,

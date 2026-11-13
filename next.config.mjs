@@ -22,6 +22,8 @@ const instituteSecurityHeaders = [
 ];
 
 const nextConfig = {
+  // Limit build worker memory without changing routes or validation coverage.
+  experimental: { cpus: 1 },
   distDir: process.env.NEXT_DIST_DIR || '.next',
   allowedDevOrigins: process.env.NODE_ENV === 'development'
     ? (process.env.INSTITUTE_DEV_ALLOWED_ORIGINS || '')

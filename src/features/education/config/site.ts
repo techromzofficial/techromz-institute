@@ -9,7 +9,7 @@ function validProductionOrigin(value?: string) {
   if (!value) return null;
   try {
     const url = new URL(value);
-    if (url.protocol !== 'https:' || ['localhost', '127.0.0.1'].includes(url.hostname)) return null;
+    if (url.protocol !== 'https:' || url.hostname !== 'techromzit.com' || url.port || url.username || url.password) return null;
     return new URL(url.origin);
   } catch {
     return null;
@@ -26,26 +26,28 @@ type InstituteMetadataOptions = {
 export function instituteMetadata(path: string, title: Metadata['title'], description: string, options: InstituteMetadataOptions = {}): Metadata {
   const canonicalPath = path.startsWith('/') ? path : `/${path}`;
   const pageIndexingEnabled = instituteIndexingEnabled && options.indexable !== false;
-  const canonicalUrl = pageIndexingEnabled ? new URL(canonicalPath, instituteProductionOrigin!).toString() : undefined;
+  const canonicalUrl = new URL(canonicalPath, 'https://techromzit.com').toString();
   return {
-    metadataBase: instituteIndexingEnabled ? instituteProductionOrigin! : undefined,
-    title,
+    metadataBase: new URL('https://techromzit.com'),
+    title: typeof title === 'string' && title.includes('Techromz Institute') ? { absolute: title } : title,
     description,
     robots: { index: pageIndexingEnabled, follow: pageIndexingEnabled },
     alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
+    twitter: { card: 'summary', images: ['/images/institute/techromz-institute-logo.png'], title: typeof title === 'string' ? title : 'Techromz Institute of Technology', description },
     openGraph: {
       title: typeof title === 'string' ? title : 'Techromz Institute of Technology',
       description,
       siteName: 'Techromz Institute of Technology',
       type: 'website',
       url: canonicalUrl,
-      images: pageIndexingEnabled ? [{ url: '/images/institute/learning/generated/practical-electronics-hero-1200.webp', width: 1200, height: 800, alt: 'Practical electronics learning concept' }] : undefined,
+      locale: 'en_LK',
+      images: [{ url: '/images/institute/techromz-institute-logo.png', alt: 'Techromz Institute of Technology' }],
     },
   };
 }
 
-export function isApprovedCourseForIndexing(course: Pick<EducationCourse, 'demo' | 'seoIndexable'>) {
-  return course.demo === false && course.seoIndexable === true;
+export function isApprovedCourseForIndexing(course: Pick<EducationCourse, 'demo' | 'seoIndexable' | 'publicationStatus'>) {
+  return course.publicationStatus !== 'unpublished' && course.demo === false && course.seoIndexable === true;
 }
 
 export const institutePublicPaths = [

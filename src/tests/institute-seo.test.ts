@@ -12,7 +12,7 @@ async function loadProductionSeoModules() {
   vi.resetModules();
   vi.stubEnv('INSTITUTE_ONLY_MODE', 'true');
   vi.stubEnv('INSTITUTE_ALLOW_INDEXING', 'true');
-  vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://learn.example.com/institute-preview');
+  vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://techromzit.com');
   const [site, robots, sitemap, coursePage] = await Promise.all([
     import('@/features/education/config/site'),
     import('@/app/robots'),
@@ -25,37 +25,38 @@ async function loadProductionSeoModules() {
 afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
 
 describe('Institute SEO safeguards', () => {
-  it('keeps preview and staging pages noindex without a canonical', async () => {
+  it('keeps staging noindex with the canonical production URL', async () => {
     const site = await loadSite('true', 'false', 'https://staging.example.com');
     const metadata = site.instituteMetadata('/institute/courses', 'Courses', 'Description');
     expect(site.instituteIndexingEnabled).toBe(false);
     expect(metadata.robots).toEqual({ index: false, follow: false });
-    expect(metadata.alternates).toBeUndefined();
+    expect(metadata.alternates).toEqual({ canonical: 'https://techromzit.com/institute/courses' });
   });
 
   it('requires all three production conditions before publishing canonicals', async () => {
-    let site = await loadSite('false', 'true', 'https://learn.example.com');
+    let site = await loadSite('false', 'true', 'https://techromzit.com');
     expect(site.instituteIndexingEnabled).toBe(false);
     site = await loadSite('true', 'true', 'http://localhost:3000');
     expect(site.instituteIndexingEnabled).toBe(false);
     site = await loadSite('true', 'true', 'https://learn.example.com');
+    expect(site.instituteIndexingEnabled).toBe(false);
+    site = await loadSite('true', 'true', 'https://techromzit.com');
     expect(site.instituteIndexingEnabled).toBe(true);
     const metadata = site.instituteMetadata('/institute', 'TIT', 'Description');
-    expect(site.instituteProductionOrigin?.toString()).toBe('https://learn.example.com/');
-    expect(metadata.metadataBase?.toString()).toBe('https://learn.example.com/');
-    expect(metadata.alternates).toEqual({ canonical: 'https://learn.example.com/institute' });
-    expect(metadata.openGraph?.url).toBe('https://learn.example.com/institute');
+    expect(site.instituteProductionOrigin?.toString()).toBe('https://techromzit.com/');
+    expect(metadata.metadataBase?.toString()).toBe('https://techromzit.com/');
+    expect(metadata.alternates).toEqual({ canonical: 'https://techromzit.com/institute' });
+    expect(metadata.openGraph?.url).toBe('https://techromzit.com/institute');
   });
 
   it('allows both exact Institute homepage forms in production robots rules', async () => {
     const { robots } = await loadProductionSeoModules();
     const result = robots();
-    expect(result.rules).toEqual({
-      userAgent: '*',
-      allow: ['/institute', '/institute/', '/images/institute/', '/_next/'],
-      disallow: '/',
-    });
-    expect(result.sitemap).toBe('https://learn.example.com/sitemap.xml');
+    expect(result.rules).toEqual([
+      { userAgent: '*', allow: ['/institute', '/images/institute/', '/_next/'], disallow: ['/', '/api/', '/institute/admin', '/institute/register', '/institute/payment', '/institute/verify'] },
+      { userAgent: ['GPTBot', 'ClaudeBot', 'Google-Extended'], disallow: '/' },
+    ]);
+    expect(result.sitemap).toBe('https://techromzit.com/sitemap.xml');
   });
 
   it('preserves restrictive robots rules outside dedicated production indexing', async () => {
@@ -69,7 +70,7 @@ describe('Institute SEO safeguards', () => {
     vi.resetModules();
     vi.stubEnv('INSTITUTE_ONLY_MODE', 'false');
     vi.stubEnv('INSTITUTE_ALLOW_INDEXING', 'true');
-    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://learn.example.com');
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://techromzit.com');
     robots = (await import('@/app/robots')).default;
     expect(robots().rules).toEqual({ userAgent: '*', disallow: '/' });
   });
@@ -82,7 +83,7 @@ describe('Institute SEO safeguards', () => {
     expect(metadata.openGraph?.url).toBeUndefined();
 
     const entries = await sitemap();
-    expect(entries).toContainEqual(expect.objectContaining({ url: 'https://learn.example.com/institute' }));
+    expect(entries).toContainEqual(expect.objectContaining({ url: 'https://techromzit.com/institute' }));
     expect(entries.some((entry) => entry.url.includes('/institute/courses/arduino-for-beginners-bundle'))).toBe(false);
     expect(entries.some((entry) => /\/institute\/courses\/[^/]+$/.test(entry.url))).toBe(false);
   });
@@ -92,8 +93,8 @@ describe('Institute SEO safeguards', () => {
     const slug = 'build-your-first-ai-assistant';
     const metadata = await generateCourseMetadata({ params: Promise.resolve({ slug }) });
     expect(metadata.robots).toEqual({ index: false, follow: false });
-    expect(metadata.alternates).toBeUndefined();
-    expect(metadata.openGraph?.url).toBeUndefined();
+    expect(metadata.alternates?.canonical).toMatch(/^https:\/\/techromzit\.com\/institute\/courses\//);
+    expect(metadata.openGraph?.url).toMatch(/^https:\/\/techromzit\.com\/institute\/courses\//);
     expect((await sitemap()).some((entry) => entry.url.endsWith(`/institute/courses/${slug}`))).toBe(false);
   });
 
@@ -102,8 +103,8 @@ describe('Institute SEO safeguards', () => {
     const slug = 'build-an-ai-knowledge-assistant';
     const metadata = await generateCourseMetadata({ params: Promise.resolve({ slug }) });
     expect(metadata.robots).toEqual({ index: false, follow: false });
-    expect(metadata.alternates).toBeUndefined();
-    expect(metadata.openGraph?.url).toBeUndefined();
+    expect(metadata.alternates?.canonical).toMatch(/^https:\/\/techromzit\.com\/institute\/courses\//);
+    expect(metadata.openGraph?.url).toMatch(/^https:\/\/techromzit\.com\/institute\/courses\//);
     expect((await sitemap()).some((entry) => entry.url.endsWith(`/institute/courses/${slug}`))).toBe(false);
   });
 

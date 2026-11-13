@@ -79,7 +79,7 @@ function isInstitutePublicApi(pathname) {
     pathname.startsWith('/api/institute/admin/');
 }
 
-export function middleware(request) {
+function routeResponse(request) {
   const { pathname } = request.nextUrl;
 
   if (INSTITUTE_ONLY_MODE) {
@@ -112,6 +112,15 @@ export function middleware(request) {
   // ── Redirect logged-in users away from login/register ──
   const isAuthRoute = AUTH_ONLY.some((route) => matchesRoute(pathname, route));
   return NextResponse.next();
+}
+
+export function middleware(request) {
+  const response = routeResponse(request);
+  const pathname = request.nextUrl.pathname;
+  if (!instituteIndexingEnabled || pathname.startsWith('/api/') || matchesRoute(pathname, '/institute/admin')) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+  return response;
 }
 
 export const config = {

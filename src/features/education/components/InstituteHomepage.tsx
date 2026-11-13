@@ -1,5 +1,6 @@
+import DecemberFirstIntake, { formatIntakeTimeRange } from './DecemberFirstIntake';
 import Link from 'next/link';
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, CircuitBoard, Code2, Languages, Leaf, Route, Scale, Ship, UsersRound } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CalendarDays, CheckCircle2, CircuitBoard, Code2, Languages, Leaf, Route, Scale, Ship, Tag, UsersRound } from 'lucide-react';
 import type { InstituteDepartment, LearningTrack } from '../contracts/content';
 import type { EducationCourse } from '../contracts/course';
 import CourseVisual from './CourseVisual';
@@ -7,6 +8,7 @@ import { InstituteButtonLink } from './InstituteButton';
 import ResponsiveLearningImage from './ResponsiveLearningImage';
 import CommunityImpactPhoto from './CommunityImpactPhoto';
 import { COMMUNITY_IMPACT } from '../data/communityImpact';
+import { FIRST_INTAKE } from '../config/intakes';
 
 const departmentPresentation = {
   electronics: {
@@ -94,21 +96,56 @@ function TechnologyHeroImage() {
 }
 
 function HomeCourseCard({ course }: { course: EducationCourse }) {
+  const intake = FIRST_INTAKE[course.slug as keyof typeof FIRST_INTAKE];
+  const feeParts = intake?.fee.split(' ') ?? [];
+  const date = intake ? new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Colombo' }).format(new Date(intake.date)) : null;
+  const time = intake ? (() => {
+    const formatHour = (value: string) => {
+      const [hourValue, minutesValue] = value.split(':').map(Number);
+      const hour = hourValue % 12 || 12;
+      return `${hour}:${String(minutesValue).padStart(2, '0')}`;
+    };
+
+    return `${formatHour(intake.start)}–${formatHour(intake.end)} ${Number(intake.end.slice(0, 2)) >= 12 ? 'PM' : 'AM'}`;
+  })() : null;
+
   return <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-lg focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2">
     <CourseVisual course={course} compact />
     <div className="flex flex-1 flex-col p-6"><div className="flex flex-wrap gap-2 text-xs font-bold"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">{course.subject}</span><span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{course.level}</span><span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-800">{course.availabilityStatus === 'coming-soon' ? 'Coming January 2027' : 'Planned intake'}</span></div><h3 className="mt-4 text-xl font-bold text-slate-950">{course.title}</h3>
 {course.subtitle && <p className="mt-1 text-sm font-semibold text-blue-800">{course.subtitle}</p>}
-<p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{course.summary}</p><Link href={`/institute/courses/${course.slug}`} className="mt-5 inline-flex items-center gap-2 self-start text-sm font-bold text-blue-700 outline-none hover:text-blue-900 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-blue-600">View details <ArrowRight size={15} /></Link></div>
+<p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{course.summary}</p><Link href={`/institute/courses/${course.slug}`} className="mt-5 inline-flex items-center gap-2 self-start text-sm font-bold text-blue-700 outline-none hover:text-blue-900 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-blue-600">View details <ArrowRight size={15} /></Link>{intake && <div className="mt-5 grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-2 overflow-hidden rounded-2xl border border-blue-100 bg-[#f0f6ff] px-3 py-2.5">
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm"><CalendarDays size={18} aria-hidden="true" /></div>
+      <div className="min-w-0 text-left">
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600" style={{ fontVariantNumeric: 'tabular-nums' }}>{date}</p>
+        <p className="mt-0.5 text-sm font-semibold leading-tight text-slate-800" style={{ fontVariantNumeric: 'tabular-nums' }}>{time}</p>
+      </div>
+    </div>
+    <div className="h-10 w-px bg-blue-200/80" aria-hidden="true" />
+    <div className="flex items-center justify-end gap-2 pl-1 text-left">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm"><Tag size={18} aria-hidden="true" /></div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">{feeParts[0]}</p>
+        <p className="mt-0.5 text-base font-extrabold leading-none text-blue-700" style={{ fontVariantNumeric: 'tabular-nums' }}>{feeParts[1]}</p>
+      </div>
+    </div>
+  </div>}</div>
   </article>;
 }
 
 export default function InstituteHomepage({ departments, tracks, courses }: { departments: InstituteDepartment[]; tracks: LearningTrack[]; courses: EducationCourse[] }) {
+  const homepageCourseOrder = ['build-your-first-ai-assistant', 'retail-kickstart', 'mobile-kickstart', 'business-management-kickstart'];
+  const homepageCourses = homepageCourseOrder
+    .map((slug) => courses.find((course) => course.slug === slug))
+    .filter((course): course is EducationCourse => Boolean(course));
+
   return <>
     <section className="overflow-hidden border-b border-slate-200 bg-gradient-to-br from-[#f7faff] via-white to-[#fff8ee]"><div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 md:grid-cols-[1.03fr_.97fr] md:py-20 lg:px-8"><div><div className="flex flex-wrap gap-2">{['Electronics & Engineering', 'IT', 'Business', 'Trade & Logistics', 'Law & Governance', 'Arts & Languages', 'Ayurveda & Wellness'].map((subject, index) => <span key={subject} className={`rounded-full border px-3 py-1 text-xs font-bold ${index >= 2 ? 'border-orange-200 bg-orange-50 text-orange-800' : 'border-blue-200 bg-white text-blue-700'}`}>{subject}</span>)}</div><h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">Big ideas start with practical skills.</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Explore hands-on learning across seven developing departments in technology, business, trade, law, arts, languages, Ayurveda and wellness with Techromz Institute of Technology.</p><div className="mt-8 flex flex-wrap gap-3"><InstituteButtonLink href="/institute/courses" variant="primary">Explore Courses <ArrowRight size={17} aria-hidden="true" /></InstituteButtonLink><InstituteButtonLink href="/institute/about" variant="secondary">Discover TIT</InstituteButtonLink></div></div><figure className="relative"><div className="flex aspect-[3/2] items-center justify-center overflow-hidden rounded-[1.75rem] border-8 border-white bg-slate-950 shadow-2xl"><TechnologyHeroImage /></div><div className="absolute -bottom-5 -left-4 hidden rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-lg sm:block"><p className="text-xs font-bold uppercase tracking-wider text-orange-800">Learn by making</p><p className="mt-1 text-sm font-semibold text-slate-800">Ideas → experiments → projects</p></div></figure></div></section>
 
     <section aria-labelledby="homepage-departments-heading" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8"><div className="max-w-2xl"><p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">Explore your interests</p><h2 id="homepage-departments-heading" className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Find the field that gets you thinking.</h2></div><div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{departments.map((department) => { const item = departmentPresentation[department.slug]; const Icon = item.Icon; return <article key={department.slug} className={`group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 ${item.accent} shadow-sm transition-shadow duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2`}><figure className="bg-white"><div className="aspect-[4/3] overflow-hidden [&_img]:h-full [&_img]:w-full [&_img]:object-cover"><ResponsiveLearningImage baseName={item.image} alt={item.alt} largeWidth={960} largeHeight={640} smallWidth={640} smallHeight={427} sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1023px) 50vw, 25vw" /></div></figure><div className="flex flex-1 flex-col p-5"><Icon size={24} aria-hidden="true" /><h3 className="mt-3 text-xl font-bold leading-tight">{department.name}</h3><p className="mt-2 flex-1 text-sm font-medium leading-6">{item.line}</p><Link href={`/institute/departments/${department.slug}`} className="mt-4 inline-flex w-fit items-center gap-2 rounded-sm text-sm font-bold text-blue-800 outline-none hover:text-blue-950 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Explore department <ArrowRight className="transition-transform duration-200 motion-safe:group-hover:translate-x-0.5" size={15} aria-hidden="true" /></Link></div></article>; })}</div></section>
 
-    <section className="bg-[#f8fafc]"><div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">Planned courses</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Build practical application skills.</h2><p className="mt-3 max-w-2xl text-slate-600">Explore our planned AI and retail software development courses. Enquiries do not reserve a place or confirm enrolment.</p></div><Link href="/institute/courses" className="text-sm font-bold text-blue-700">View all courses →</Link></div><div className="mt-9 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{courses.map((course) => <HomeCourseCard key={course.slug} course={course} />)}</div></div></section>
+    <DecemberFirstIntake courses={courses} showCards={false} />
+    <section className="bg-[#f8fafc]"><div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">Planned courses</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Build practical application skills.</h2><p className="mt-3 max-w-2xl text-slate-600">Explore our planned AI and retail software development courses. Enquiries do not reserve a place or confirm enrolment.</p></div><Link href="/institute/courses" className="text-sm font-bold text-blue-700">View all courses →</Link></div><div className="mt-9 grid gap-6 md:grid-cols-2 lg:grid-cols-4">{homepageCourses.map((course) => <HomeCourseCard key={course.slug} course={course} />)}</div></div></section>
 
     <section aria-labelledby="community-impact-heading" className="border-y border-blue-100 bg-blue-50"><div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8"><div><p className="text-sm font-bold uppercase tracking-[.16em] text-blue-700">Our community impact</p><h2 id="community-impact-heading" className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{COMMUNITY_IMPACT.homepageHeading}</h2><p className="mt-4 max-w-3xl leading-7 text-slate-700">{COMMUNITY_IMPACT.homepageDescription}</p><dl className="mt-7 grid gap-3 sm:grid-cols-3">{COMMUNITY_IMPACT.impact.map((item) => <div key={item.label} className="rounded-xl border border-blue-200 bg-white p-4"><dt className="text-sm font-bold leading-5 text-slate-700">{item.label}</dt><dd className="mt-1 text-2xl font-bold text-blue-800">{item.value}</dd></div>)}</dl><p className="mt-5 text-sm font-semibold text-slate-700">{COMMUNITY_IMPACT.fundingStatement}</p><InstituteButtonLink href="/institute/community-impact" variant="primary" className="mt-7">Explore Our Community Impact <ArrowRight size={16} aria-hidden="true" /></InstituteButtonLink></div><figure className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]"><CommunityImpactPhoto {...COMMUNITY_IMPACT.gallery[0]} sizes="(max-width: 1023px) calc(100vw - 2rem), 44vw" /></figure></div></section>
 

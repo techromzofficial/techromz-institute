@@ -40,7 +40,7 @@ export const INSTITUTE_DEPARTMENTS: InstituteDepartment[] = [
     faqs: [
       { question: 'Is AI a separate TIT department?', answer: 'No. AI and Data Science are presented as specialisms within Information Technology, alongside programming, networking, cybersecurity, and cloud topics.' },
       { question: 'Which software or computer specifications are required?', answer: 'No final software stack or device requirement has been approved. Each confirmed programme will need to state its tools and prerequisites clearly.' },
-      { question: 'Do the demonstration courses award a qualification?', answer: 'No qualification, accreditation or completion recognition is claimed. The current listings demonstrate possible learning content only.' },
+      { question: 'Do the demonstration courses award a qualification?', answer: 'Check each course page for its published completion criteria and Institute Certificate of Completion information. An Institute certificate does not imply external accreditation or professional licensing; demonstration projects are learning examples, not qualifications.' },
     ],
     developmentStatus: 'The AI assistant and Retail Kickstart courses are planned offerings. Other Information Technology listings remain demonstration concepts, with technologies, schedules and delivery formats subject to confirmation.',
   },

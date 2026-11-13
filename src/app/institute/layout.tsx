@@ -5,6 +5,7 @@ import InstituteContentProtection from '@/features/education/components/Institut
 import { instituteIndexingEnabled, instituteProductionOrigin } from '@/features/education/config/site';
 
 export const metadata: Metadata = {
+  icons: { icon: '/images/institute/techromz-institute-logo.png' },
   metadataBase: instituteIndexingEnabled ? instituteProductionOrigin! : undefined,
   title: { default: 'Techromz Institute of Technology', template: '%s | Techromz Institute' },
   description: 'A practical education storefront for seven developing departments spanning technology, business, trade, law, arts, languages, Ayurveda and wellness.',

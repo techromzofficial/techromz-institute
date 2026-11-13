@@ -4,7 +4,7 @@ import { instituteIndexingEnabled, instituteProductionOrigin } from '@/features/
 export default function robots(): MetadataRoute.Robots {
   if (instituteIndexingEnabled && instituteProductionOrigin) {
     return {
-      rules: { userAgent: '*', allow: ['/institute', '/institute/', '/images/institute/', '/_next/'], disallow: '/' },
+      rules: [{ userAgent: '*', allow: ['/institute', '/images/institute/', '/_next/'], disallow: ['/', '/api/', '/institute/admin', '/institute/register', '/institute/payment', '/institute/verify'] }, { userAgent: ['GPTBot', 'ClaudeBot', 'Google-Extended'], disallow: '/' }],
       sitemap: new URL('/sitemap.xml', instituteProductionOrigin).toString(),
     };
   }

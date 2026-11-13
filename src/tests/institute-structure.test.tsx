@@ -13,7 +13,7 @@ import { educationContentService } from '@/features/education/services/contentSe
 describe('Institute information structure', () => {
   it('keeps departments, specialisms and courses as separate typed content', async () => {
     const departments = await educationContentService.listDepartments();
-    expect(departments.map((item) => item.name)).toEqual(['Electronics & Engineering', 'Information Technology', 'Business & Management', 'Trade & Logistics', 'Law & Corporate Governance', 'Department of Arts & Languages', 'Department of Ayurveda & Wellness']);
+    expect(departments.map((item) => item.name)).toEqual(['Information Technology', 'Business & Management', 'Trade & Logistics', 'Electronics & Engineering', 'Law & Corporate Governance', 'Department of Arts & Languages', 'Department of Ayurveda & Wellness']);
     expect(departments.find((item) => item.slug === 'information-technology')?.specialisms.map((item) => item.name)).toContain('AI & Data Science');
     expect(departments.find((item) => item.slug === 'business-management')?.courseSlugs).toEqual([
       'business-management-kickstart',
@@ -47,14 +47,14 @@ describe('Institute information structure', () => {
   it('renders department destinations without linking individual specialisms', async () => {
     render(await DepartmentsPage());
     expect(screen.getByRole('heading', { name: 'Electronics & Engineering' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Explore department' })[0]).toHaveAttribute('href', '/institute/departments/electronics');
+    expect(screen.getAllByRole('link', { name: 'Explore department' })[3]).toHaveAttribute('href', '/institute/departments/electronics');
     expect(screen.queryByRole('link', { name: 'Robotics' })).not.toBeInTheDocument();
   });
 
   it('connects each department to a roadmap, student FAQs and tailored enquiries', async () => {
     const departments = await educationContentService.listDepartments();
     expect(departments.every((item) => item.faqs.length >= 3)).toBe(true);
-    const electronics = departments[0];
+    const electronics = departments.find((department) => department.slug === 'electronics')!;
     render(await DepartmentPage({ params: Promise.resolve({ slug: electronics.slug }) }));
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Electronics & Engineering FAQs' })).toBeInTheDocument();
@@ -127,7 +127,7 @@ describe('Institute information structure', () => {
     expect(screen.getByText(/1 November 2026.*1 December 2026/)).toBeInTheDocument();
     expect(screen.getByText('Sinhala and English are listed for the demonstration Arduino bundle.')).toBeInTheDocument();
     expect(screen.getByText(/does not confirm registration, availability or a booking/i)).toBeInTheDocument();
-    expect(screen.getByText(/does not submit or store an enquiry/i)).toBeInTheDocument();
+    expect(screen.getByText(/Accepted enquiries are stored for handling and queued for email notification/i)).toBeInTheDocument();
   });
 
   it('exposes all requested destinations in desktop and mobile navigation', () => {

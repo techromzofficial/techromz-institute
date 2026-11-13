@@ -73,12 +73,12 @@ describe('Education preview catalogue', () => {
       registration: course.plannedDetails?.registrationOpens,
       timeZone: course.plannedDetails?.timeZone,
     }))).toEqual([
-      { title: 'AI Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'AI Knowledge Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Developer Lab', level: 'Intermediate', fee: 'LKR 15,000', start: '2026-12-02T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'AI Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T17:30:00+05:30', time: '17:30-19:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
-      { title: 'Retail Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: '2026-12-03T19:30:00+05:30', time: '19:30-21:30', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: '2026-11-01T00:00:00+05:30', timeZone: 'Asia/Colombo' },
+      { title: 'AI Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T18:00:00+05:30', time: '18:00-20:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
+      { title: 'Retail Kickstart', level: 'Beginner', fee: 'LKR 7,500', start: '2026-12-01T20:00:00+05:30', time: '20:00-22:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
+      { title: 'AI Knowledge Lab', level: 'Intermediate', fee: 'LKR 15,000', start: undefined, time: '00:00-00:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
+      { title: 'Retail Developer Lab', level: 'Intermediate', fee: 'LKR 15,000', start: undefined, time: '00:00-00:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
+      { title: 'AI Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: undefined, time: '00:00-00:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
+      { title: 'Retail Launchpad', level: 'Advanced', fee: 'LKR 25,000', start: undefined, time: '00:00-00:00', language: 'Sinhala', delivery: 'Online (Zoom)', duration: 'Eight weeks', registration: undefined, timeZone: 'Asia/Colombo' },
     ]);
   });
 
@@ -93,8 +93,8 @@ describe('Education preview catalogue', () => {
     for (const course of courses) {
       expect(course).toMatchObject({ demo: false, seoIndexable: false });
       expect(course.plannedDetails?.imageBaseName).toBe(`mobile/${course.slug}`);
-      expect(course.plannedDetails).toMatchObject({ duration: 'Eight weeks', totalLiveLearning: '16 hours', cohortCapacity: 'Maximum 30 students per course', teachingLanguage: 'Sinhala', registrationDeadline: '2026-11-27T23:59:59+05:30' });
-      expect(course.plannedDetails?.courseStarts).toBeUndefined();
+      expect(course.plannedDetails).toMatchObject({ duration: 'Eight weeks', totalLiveLearning: '16 hours', cohortCapacity: 'Maximum 30 students per course', teachingLanguage: 'Sinhala', registrationDeadline: undefined });
+      expect(course.plannedDetails?.courseStarts).toBe(course.slug === 'mobile-kickstart' ? '2026-12-07T18:00:00+05:30' : undefined);
       expect(course.plannedDetails?.weeklyCurriculum).toHaveLength(8);
     }
   });

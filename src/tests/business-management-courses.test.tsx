@@ -25,7 +25,8 @@ describe('Business & Management planned courses', () => {
       expect(course.plannedDetails?.imageBaseName).toBe(`business-management/${course.slug}`);
       expect(course.plannedDetails?.imageAlt).toBeTruthy();
       expect(course.plannedDetails?.weeklyCurriculum).toHaveLength(8);
-      expect(course.plannedDetails?.courseStarts).toBeUndefined();
+      if (course.slug === 'business-management-kickstart') expect(course.plannedDetails?.courseStarts).toBe('2026-12-07T20:00:00+05:30');
+      else expect(course.plannedDetails?.courseStarts).toBeUndefined();
       expect(course.plannedDetails?.registrationOpens).toBeUndefined();
       expect(course.plannedDetails?.completionPolicyNote).toMatch(/not yet been approved/i);
     }

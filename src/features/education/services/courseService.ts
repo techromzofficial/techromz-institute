@@ -1,3 +1,4 @@
+import { applyApprovedIntake } from '../config/intakes';
 import type { EducationCourse, EducationCourseService } from '../contracts/course';
 import { DEMO_COURSES } from '../data/demoCourses';
 import { BUSINESS_COURSES } from '../data/businessCourses';
@@ -63,6 +64,7 @@ export function isCoursePublished(course: EducationCourse): boolean {
 class LocalEducationCourseService implements EducationCourseService {
   private readonly courses = [...DEMO_COURSES, ...ELECTRONICS_TECHNOLOGY_COURSES, ...BUSINESS_COURSES, ...TRADE_LOGISTICS_COURSES, ...LAW_CORPORATE_GOVERNANCE_COURSES, ...ARTS_LANGUAGES_COURSES, ...AYURVEDA_WELLNESS_COURSES];
   private prepareForPublicDiscovery(course: EducationCourse): EducationCourse {
+    course = applyApprovedIntake(course);
     const publishedSlugs = new Set(this.courses.filter(isCoursePublished).map(({ slug }) => slug));
     if (!course.plannedDetails) return course;
     const pathwayCourses = course.plannedDetails.pathwayCourses?.filter(({ slug }) => publishedSlugs.has(slug));
